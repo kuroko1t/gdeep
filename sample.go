@@ -32,8 +32,10 @@ func main() {
 	fmt.Print(cap(in_data))
 	size_in := C.size_t(unsafe.Sizeof(in_data))
 	C.cudaMalloc(&in_unsafe, size_in)
+	C.cudaMalloc(&out_unsafe, size_in)
 	fmt.Print(out_data)
 	C.cudaMemcpy(unsafe.Pointer(in_unsafe), unsafe.Pointer(&in_data), size_in,C.cudaMemcpyHostToDevice)
+	C.cudaMemcpy(unsafe.Pointer(out_unsafe), unsafe.Pointer(&out_data), size_in,C.cudaMemcpyHostToDevice)
 
 	// cudnn
 	var cudnnHandle C.cudnnHandle_t
