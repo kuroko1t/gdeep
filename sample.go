@@ -25,7 +25,10 @@ func main() {
 		0, 1, 0 , 0, 1, 0 , 0, 1, 0,
 		2, 1, 1 , 1, 1, 1 , 1, 1, 1,
 	}
-	out_data := [18]float64{}
+	out_data := [18]float64{
+		0, 1, 0 , 0, 1, 0 , 0, 1, 0,
+		2, 1, 1 , 1, 1, 1 , 1, 1, 1,
+	}
 	fmt.Print(cap(in_data))
 	size_in := C.size_t(unsafe.Sizeof(in_data))
 	C.cudaMalloc(&in_unsafe, size_in)
@@ -43,7 +46,7 @@ func main() {
 	C.cudnnSetTensor4dDescriptor(dstTensorDesc, C.CUDNN_TENSOR_NCHW, C.CUDNN_DATA_FLOAT, n, c, h, w)
 
 	var alpha float64 = 1.0
-	var beta float64 = 1.0
+	var beta float64 = 3.0
 	C.cudnnAddTensor(cudnnHandle,
 	    unsafe.Pointer(&alpha),
 	    srcTensorDesc,
@@ -53,5 +56,7 @@ func main() {
 	    out_unsafe)
 
 	C.cudaMemcpy(unsafe.Pointer(&out_data), unsafe.Pointer(out_unsafe), size_in,C.cudaMemcpyDeviceToHost)
+	C.cudaFree(in_unsafe)
+	C.cudaFree(out_unsafe)
 	fmt.Print(out_data)
 }
