@@ -39,19 +39,21 @@ func CUDNN_CHECK (error C.cudnnStatus_t) {
 	}
 }
 
-
 func Host2GPU (input []float64) (unsafe.Pointer) {
 	var in_data_dev unsafe.Pointer
-	size := C.size_t(len(input))
+	//fmt.Println(int(unsafe.Sizeof(&input)))
+	size := C.size_t(len(input) * int(unsafe.Sizeof(&input)))
+	fmt.Println(size)
 	C.cudaMalloc(&in_data_dev, size)
 	C.cudaMemcpy(in_data_dev, unsafe.Pointer(&input[0]), size ,C.cudaMemcpyHostToDevice)
 	return in_data_dev
 }
 
 func GPU2Host (dev_data unsafe.Pointer, hostdata []float64) () {
+	fmt.Println(len(hostdata) * int(unsafe.Sizeof(&hostdata)))
 	CUDA_CHECK(C.cudaMemcpy(unsafe.Pointer(&hostdata[0]),
 	 	dev_data,
-	 	C.size_t(len(hostdata)), C.cudaMemcpyDeviceToHost))
+	 	C.size_t(len(hostdata) * int(unsafe.Sizeof(&hostdata))), C.cudaMemcpyDeviceToHost))
 	CUDA_CHECK(C.cudaFree(dev_data))
 }
 
