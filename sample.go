@@ -8,6 +8,48 @@ import "C"
 import "unsafe"
 import "fmt"
 
+type Affine struct {
+	dw float64
+	db float64
+	w float64
+	b float64
+}
+
+//type layer interface {
+// 	forward
+// 	backward
+//}
+
+func cUDA_CHECK (C.cudaError_t error) () {
+	fmt.Printf("%s",C.cudaGetErrorString(error))
+}
+
+func Host2GPU (input []float64) (unsafe.Pointer) {
+	var in_data_dev unsafe.Pointer
+	size := C.size_t(len(input))
+	in_unsafe := unsafe.Pointer(in_data_dev)
+	C.cudaMalloc(&in_unsafe, size)
+	C.cudaMemcpy(unsafe.Pointer(in_data_dev), unsafe.Pointer(&input[0]), size ,C.cudaMemcpyHostToDevice)
+	return in_data_dev
+}
+
+func GPU2Host (dev_data unsafe.Pointer, hostdata []float64) () {
+	//var in_data_dev *float64
+	//fmt.Print(len(input))
+	//C.cudaMalloc(&in_unsafe, size)
+	C.cudaMemcpy(unsafe.Pointer(&hostdata[0]),
+	 	dev_data,
+	 	C.size_t(len(hostdata)), C.cudaMemcpyDeviceToHost)
+	C.cudaFree(dev_data)
+}
+
+
+
+//forward (affine Affine, input float64) (float64) {
+//
+//}
+
+
 func main() {
 //	var cudaStatus C.cudaError_t
 	//cudaStatus = cudaSetDevices(0)
@@ -16,27 +58,29 @@ func main() {
 	var h C.int = 3
 	var w C.int = 3
 	C.cudaSetDevice(0)
-	var in_data_dev *float64
-	var out_data_dev *float64
-	in_unsafe := unsafe.Pointer(in_data_dev)
-	out_unsafe := unsafe.Pointer(out_data_dev)
+	//var in_data_dev *float64
+	//	var out_data_dev *float64
+	//in_unsafe := unsafe.Pointer(in_data_dev)
+	//out_unsafe := unsafe.Pointer(out_data_dev)
 	//in_data := [3]float64{1,1,1}
-	in_data := [18]float64{
+	in_data := []float64{
 		0, 1, 0 , 0, 1, 0 , 0, 1, 0,
 		2, 1, 1 , 1, 1, 1 , 1, 1, 1,
 	}
-	out_data := [18]float64{
+	out_data := []float64{
 		0, 1, 0 , 0, 1, 0 , 0, 1, 0,
 		2, 1, 1 , 1, 1, 1 , 1, 1, 1,
 	}
-	fmt.Print(cap(in_data))
-	size_in := C.size_t(unsafe.Sizeof(in_data))
-	C.cudaMalloc(&in_unsafe, size_in)
-	C.cudaMalloc(&out_unsafe, size_in)
-	fmt.Print(out_data)
-	C.cudaMemcpy(unsafe.Pointer(in_unsafe), unsafe.Pointer(&in_data), size_in,C.cudaMemcpyHostToDevice)
-	C.cudaMemcpy(unsafe.Pointer(out_unsafe), unsafe.Pointer(&out_data), size_in,C.cudaMemcpyHostToDevice)
-
+	//fmt.Print(cap(in_data))
+	//size_in := C.size_t(unsafe.Sizeof(in_data))
+	//C.cudaMalloc(&in_unsafe, size_in)
+	//C.cudaMalloc(&out_unsafe, size_in)
+	//fmt.Print(out_data)
+	//C.cudaMemcpy(unsafe.Pointer(in_unsafe), unsafe.Pointer(&in_data), size_in,C.cudaMemcpyHostToDevice)
+	//C.cudaMemcpy(unsafe.Pointer(out_unsafe), unsafe.Pointer(&out_data), size_in,C.cudaMemcpyHostToDevice)
+	//fmt.Print(&in_data,"\n")
+	in_unsafe := unsafe.Pointer(Host2GPU(in_data))
+	out_unsafe := unsafe.Pointer(Host2GPU(out_data))
 	// cudnn
 	var cudnnHandle C.cudnnHandle_t
 	var srcTensorDesc, dstTensorDesc C.cudnnTensorDescriptor_t
@@ -57,8 +101,10 @@ func main() {
 	    dstTensorDesc,
 	    out_unsafe)
 
-	C.cudaMemcpy(unsafe.Pointer(&out_data), unsafe.Pointer(out_unsafe), size_in,C.cudaMemcpyDeviceToHost)
+	//C.cudaMemcpy(unsafe.Pointer(&out_data), unsafe.Pointer(out_unsafe), size_in,C.cudaMemcpyDeviceToHost)
+	fmt.Print(out_data,"\n")
+	GPU2Host(out_unsafe, out_data)
+	fmt.Print(out_data,"\n")
 	C.cudaFree(in_unsafe)
-	C.cudaFree(out_unsafe)
-	fmt.Print(out_data)
+	//C.cudaFree(out_unsafe)
 }
