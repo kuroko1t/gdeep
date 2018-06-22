@@ -74,11 +74,11 @@ func (affine *Affine) backward(dout *mat.Dense) (*mat.Dense) {
 
 	xt.Inverse(affine.x)
 	affine.dw.Mul(xt, dout)
-	affine.db = sum(dout)
+	affine.db = sum_row(dout)
 	return dx
 }
 
-func sum(m *mat.Dense) (*mat.Dense) {
+func sum_row(m *mat.Dense) (*mat.Dense) {
 	r, c := m.Dims()
 	sum_array:=make([]float64,c)
 	for j:=0; j< c ; j++ {
@@ -92,31 +92,59 @@ func sum(m *mat.Dense) (*mat.Dense) {
 	return sums
 }
 
+func sum_col(m *mat.Dense) (*mat.Dense) {
+	r, c := m.Dims()
+	sum_array:=make([]float64,c)
+	for j:=0; j< r ; j++ {
+		sum_value := 0.0
+		for i:=0; i< c ; r++ {
+			sum_value += m.At(j,i)
+		}
+		sum_array[j] = sum_value
+	}
+	sums := mat.NewDense(1, r, sum_array)
+	return sums
+}
+
 // softmax_withloss
 
 func (softmaxWithLoss *SoftmaxWithLoss) forward(x *mat.Dense, t *mat.Dense) (*mat.Dense) {
 	softmaxWithLoss.t = t
-	sigmoid.out = x
+	//sigmoid.out = x
 	return x
 }
 
-func (softmaxWithLoss *SoftmaxWithLoss) backward(dout *mat.Dense) (*mat.Dense) {
-	r, c := dout.Dims()
-	dx := mat.NewDense(r, c, nil)
-	fmt.Println("koko",sigmoid.out)
-	dx.Apply(sigmoid_b,dout)
-	fmt.Println("koko",sigmoid.out)
-	dx.MulElem(dx, sigmoid.out)
-	dx.MulElem(dx,dout)
-	return dx
+//func (softmaxWithLoss *SoftmaxWithLoss) backward(dout *mat.Dense) (*mat.Dense) {
+// 	r, c := dout.Dims()
+// 	dx := mat.NewDense(r, c, nil)
+// 	fmt.Println("koko",sigmoid.out)
+// 	dx.Apply(sigmoid_b,dout)
+// 	fmt.Println("koko",sigmoid.out)
+// 	dx.MulElem(dx, sigmoid.out)
+// 	dx.MulElem(dx,dout)
+// 	return dx
+//}
+
+func exp(i, j int, v float64) float64 {
+	return math.Exp(v)
+}
+
+func softmax(a *mat.Dense) (*mat.Dense) {
+	a.Apply(exp,a)
+	r, _ := a.Dims()
+	sum_exp := mat.NewDense(1, r, nil)
+	sum_exp =sum_col(a)
+	fmt.Println(sum_exp)
+	return a
 }
 
 
 func main() {
 	zero := mat.NewDense(3, 5, nil)
 	zero.Apply(add1,zero)
-	sigmoid := Sigmoid{zero}
-	sigmoid.forward(zero)
-	sigmoid.backward(zero)
+	//sigmoid := Sigmoid{zero}
+	//sigmoid.forward(zero)
+	//sigmoid.backward(zero)
 	//fmt.Print(zero)
+	softmax(zero)
 }
