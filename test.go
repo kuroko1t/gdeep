@@ -1,8 +1,12 @@
 package main
 
-import "fmt"
-import "gonum.org/v1/gonum/mat"
-import "math"
+import (
+	"fmt"
+	"math"
+	"math/rand"
+
+	"gonum.org/v1/gonum/mat"
+)
 
 type Sigmoid struct {
 	out *mat.Dense
@@ -20,6 +24,32 @@ type SoftmaxWithLoss struct {
 	loss *mat.Dense
 	y    *mat.Dense
 	t    *mat.Dense
+}
+
+type Relu struct {
+	mask *mat.Dense
+}
+
+func (relu *Relu) forward(x *mat.Dense) *mat.Dense {
+	fmt.Println(x)
+	fmt.Println(relu.mask)
+	relu.mask.Apply(maskFunc, x)
+	x.MulElem(x, relu.mask)
+	return x
+}
+
+func (relu *Relu) backward(dout *mat.Dense) *mat.Dense {
+	dout.MulElem(dout, relu.mask)
+	return dout
+}
+
+func maskFunc(i, j int, v float64) float64 {
+	if v <= 0 {
+		v = 0
+	} else {
+		v = 1
+	}
+	return v
 }
 
 func (sigmoid *Sigmoid) forward(x *mat.Dense) *mat.Dense {
@@ -62,9 +92,11 @@ func (affine *Affine) init(w *mat.Dense, b *mat.Dense) {
 
 func (affine *Affine) forward(x *mat.Dense) *mat.Dense {
 	affine.x = x
-	x.Mul(x, affine.w)
-	x.Add(x, affine.b)
-	return x
+	var c mat.Dense
+	c.Mul(x, affine.w)
+	c.Add(&c, affine.b)
+	fmt.Println(c)
+	return &c
 }
 
 func (affine *Affine) backward(dout *mat.Dense) *mat.Dense {
@@ -119,10 +151,10 @@ func (softmaxWithLoss *SoftmaxWithLoss) forward(x *mat.Dense, t *mat.Dense) *mat
 }
 
 func (softmaxWithLoss *SoftmaxWithLoss) backward() (dx *mat.Dense) {
-	batchSize , c := softmaxWithLoss.t.Dims()
-	batchSizeArray := mat.NewDense(batchSize, c, make([]float64, batchSize*c,batchSize))
+	batchSize, c := softmaxWithLoss.t.Dims()
+	batchSizeArray := mat.NewDense(batchSize, c, make([]float64, batchSize*c, batchSize))
 	dx.Sub(softmaxWithLoss.y, softmaxWithLoss.t)
-	dx.DivElem(dx,batchSizeArray)
+	dx.DivElem(dx, batchSizeArray)
 	return dx
 }
 
@@ -135,14 +167,14 @@ func softmax(a *mat.Dense) *mat.Dense {
 	r, _ := a.Dims()
 	sumExp := mat.NewDense(1, r, nil)
 	sumExp = sumCol(a)
-	sumExp.DivElem(a,sumExp)
+	sumExp.DivElem(a, sumExp)
 	return sumExp
 }
 
 func crossEnrtopyError(y *mat.Dense, t *mat.Dense) *mat.Dense {
-	y.Apply(crossEnrtopy,y)
-	y.MulElem(t,y)
-	y.Apply(minus,sumCol(y))
+	y.Apply(crossEnrtopy, y)
+	y.MulElem(t, y)
+	y.Apply(minus, sumCol(y))
 	return y
 }
 
@@ -151,13 +183,34 @@ func crossEnrtopy(i, j int, v float64) float64 {
 	return math.Log(v + delta)
 }
 
+func randomArray(data []float64) []float64 {
+	for i := range data {
+		data[i] = rand.NormFloat64()
+	}
+	return data
+}
+
 func main() {
-	zero := mat.NewDense(3, 5, nil)
-	zero.Apply(add1, zero)
-	//sigmoid := Sigmoid{zero}
-	//sigmoid.forward(zero)
+	//zero.Apply(add1, zero)
+	batchSize := 3
+	inputSize := 8
+	hiddenSize := 2
+	data := make([]float64, batchSize*inputSize)
+	w := make([]float64, inputSize*hiddenSize)
+	b := make([]float64, batchSize*hiddenSize)
+	x := mat.NewDense(batchSize, inputSize, randomArray(data))
+	w1 := mat.NewDense(inputSize, hiddenSize, randomArray(w))
+	b1 := mat.NewDense(batchSize, hiddenSize, randomArray(b))
+	//w2 := mat.NewDense(4, 9, randomArray(data))
+	//b2 := mat.NewDense(4, 9, randomArray(data))
+	affine1 := Affine{w1, b1, w1, w1, b1}
+	relu1 := Relu{b1}
+	//fmt.Print(x)
+	x = affine1.forward(x)
+	x = relu1.forward(x)
+	fmt.Println(x)
 	//sigmoid.backward(zero)
-	//fmt.Print(zero)
-	softmax(zero)
-	crossEnrtopyError(zero,zero)
+	//softmax(zero)
+	//crossEnrtopyError(zero, zero)
+	//fmt.Print(x)
 }
