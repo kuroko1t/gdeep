@@ -190,6 +190,17 @@ func randomArray(data []float64) []float64 {
 	return data
 }
 
+type ForwardInterface interface {
+	forward() *mat.Dense
+}
+
+func Update(layer []ForwardInterface) {
+	for f,v := range layer {
+		fmt.Println(f)
+		fmt.Println(v)
+	}
+}
+
 func main() {
 	//zero.Apply(add1, zero)
 	batchSize := 3
@@ -197,6 +208,7 @@ func main() {
 	hiddenSize := 2
 	outputSize := 10
 	xData := make([]float64, batchSize*inputSize)
+	tData := make([]float64, batchSize*outputSize)
 	w0Data := make([]float64, inputSize*hiddenSize)
 	b0Data := make([]float64, batchSize*hiddenSize)
 	w1Data := make([]float64, hiddenSize*outputSize)
@@ -204,17 +216,25 @@ func main() {
 	x := mat.NewDense(batchSize, inputSize, randomArray(xData))
 	w0 := mat.NewDense(inputSize, hiddenSize, randomArray(w0Data))
 	b0 := mat.NewDense(batchSize, hiddenSize, randomArray(b0Data))
-	w1 := mat.NewDense(inputSize, hiddenSize, randomArray(w1Data))
-	b1 := mat.NewDense(batchSize, hiddenSize, randomArray(b1Data))
+	w1 := mat.NewDense(hiddenSize, outputSize, randomArray(w1Data))
+	b1 := mat.NewDense(batchSize, outputSize, randomArray(b1Data))
+	t := mat.NewDense(batchSize, outputSize, randomArray(tData))
 	//w2 := mat.NewDense(4, 9, randomArray(data))
 	//b2 := mat.NewDense(4, 9, randomArray(data))
 	affine1 := Affine{w0, b0, w0, w0, b0}
 	affine2 := Affine{w1, b1, w1, w1, b1}
 	relu1 := Relu{b0}
+	softmaxWithLoss := SoftmaxWithLoss{}
 	//fmt.Print(x)
-	x = affine1.forward(x)
-	x = relu1.forward(x)
-	x = affine2.forward(x)
+	layer := []ForwardInterface{}
+	layer = append(layer, &Affine{w0, b0, w0, w0, b0})
+	layer = append(layer, &Relu{b0})
+	layer = append(layer, &Affine{w1, b1, w1, w1, b1})
+	//layer.append(layer, &SoftmaxWithLoss{})
+	//x = affine1.forward(x)
+	//x = relu1.forward(x)
+	//x = affine2.forward(x)
+	//softmaxWithLoss.forward(x, t)
 	fmt.Println(x)
 	//sigmoid.backward(zero)
 	//softmax(zero)
