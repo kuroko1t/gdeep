@@ -193,21 +193,28 @@ func randomArray(data []float64) []float64 {
 func main() {
 	//zero.Apply(add1, zero)
 	batchSize := 3
-	inputSize := 8
+	inputSize := 12
 	hiddenSize := 2
-	data := make([]float64, batchSize*inputSize)
-	w := make([]float64, inputSize*hiddenSize)
-	b := make([]float64, batchSize*hiddenSize)
-	x := mat.NewDense(batchSize, inputSize, randomArray(data))
-	w1 := mat.NewDense(inputSize, hiddenSize, randomArray(w))
-	b1 := mat.NewDense(batchSize, hiddenSize, randomArray(b))
+	outputSize := 10
+	xData := make([]float64, batchSize*inputSize)
+	w0Data := make([]float64, inputSize*hiddenSize)
+	b0Data := make([]float64, batchSize*hiddenSize)
+	w1Data := make([]float64, hiddenSize*outputSize)
+	b1Data := make([]float64, batchSize*outputSize)
+	x := mat.NewDense(batchSize, inputSize, randomArray(xData))
+	w0 := mat.NewDense(inputSize, hiddenSize, randomArray(w0Data))
+	b0 := mat.NewDense(batchSize, hiddenSize, randomArray(b0Data))
+	w1 := mat.NewDense(inputSize, hiddenSize, randomArray(w1Data))
+	b1 := mat.NewDense(batchSize, hiddenSize, randomArray(b1Data))
 	//w2 := mat.NewDense(4, 9, randomArray(data))
 	//b2 := mat.NewDense(4, 9, randomArray(data))
-	affine1 := Affine{w1, b1, w1, w1, b1}
-	relu1 := Relu{b1}
+	affine1 := Affine{w0, b0, w0, w0, b0}
+	affine2 := Affine{w1, b1, w1, w1, b1}
+	relu1 := Relu{b0}
 	//fmt.Print(x)
 	x = affine1.forward(x)
 	x = relu1.forward(x)
+	x = affine2.forward(x)
 	fmt.Println(x)
 	//sigmoid.backward(zero)
 	//softmax(zero)
