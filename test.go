@@ -212,36 +212,56 @@ func BackLayer(layer []ForwardInterface, dout *mat.Dense) *mat.Dense {
 	return dout
 }
 
+func constMulElem(x *mat.Dense, constNum float64) (y *mat.Dense) {
+	r, c := x.Dims()
+	xData := make([]float64, r*c)
+	for i, _ := range  xData{
+		xData[i] = constNum
+	}
+	y = mat.NewDense(r, c, xData)
+	return y
+}
+
 func main() {
 	//zero.Apply(add1, zero)
 	batchSize := 3
 	inputSize := 12
 	hiddenSize := 2
 	outputSize := 10
+	learningRate := 0.01
 
-	xData := make([]float64, batchSize*inputSize)
-	tData := make([]float64, batchSize*outputSize)
+
 	w0Data := make([]float64, inputSize*hiddenSize)
 	b0Data := make([]float64, batchSize*hiddenSize)
 	w1Data := make([]float64, hiddenSize*outputSize)
 	b1Data := make([]float64, batchSize*outputSize)
-	x := mat.NewDense(batchSize, inputSize, randomArray(xData))
 	w0 := mat.NewDense(inputSize, hiddenSize, randomArray(w0Data))
 	b0 := mat.NewDense(batchSize, hiddenSize, randomArray(b0Data))
 	w1 := mat.NewDense(hiddenSize, outputSize, randomArray(w1Data))
 	b1 := mat.NewDense(batchSize, outputSize, randomArray(b1Data))
-	t := mat.NewDense(batchSize, outputSize, randomArray(tData))
 
 	layer := []ForwardInterface{}
-	layer = append(layer, &Affine{w0, b0, w0, w0, b0})
-	layer = append(layer, &Relu{b0})
-	layer = append(layer, &Affine{w1, b1, w1, w1, b1})
-	x = Update(layer, x)
-	softmaxWithLoss := SoftmaxWithLoss{}
-	loss := softmaxWithLoss.forward(x, t)
-	fmt.Println(loss)
-	dout := mat.NewDense(batchSize, outputSize, randomArray(tData))
-	dout =  softmaxWithLoss.backward(dout)
-	dout = BackLayer(layer,dout)
-
+	affine1 := &Affine{w0, b0, w0, w0, b0}
+	relu1 := &Relu{b0}
+	affine2 := &Affine{w1, b1, w1, w1, b1}
+	layer = append(layer, affine1)
+	layer = append(layer, relu1)
+	layer = append(layer, affine2)
+	for i :=0 ; i < 100 ; i ++ {
+		xData := make([]float64, batchSize*inputSize)
+		tData := make([]float64, batchSize*outputSize)
+		x := mat.NewDense(batchSize, inputSize, randomArray(xData))
+		t := mat.NewDense(batchSize, outputSize, randomArray(tData))
+		x = Update(layer, x)
+		softmaxWithLoss := SoftmaxWithLoss{}
+		loss := softmaxWithLoss.forward(x, t)
+		fmt.Println(loss)
+		dout := mat.NewDense(batchSize, outputSize, randomArray(tData))
+		dout =  softmaxWithLoss.backward(dout)
+		dout = BackLayer(layer,dout)
+		affine1.w.Sub(affine1.w, constMulElem(affine1.dw, learningRate))
+		affine1.b.Sub(affine1.b, constMulElem(affine1.db ,learningRate))
+		affine2.w.Sub(affine2.w, constMulElem(affine2.dw ,learningRate))
+		affine2.b.Sub(affine2.b, constMulElem(affine2.db ,learningRate))
+	}
 }
