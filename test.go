@@ -100,22 +100,18 @@ func (affine *Affine) forward(x *mat.Dense) *mat.Dense {
 }
 
 func (affine *Affine) backward(dout *mat.Dense) *mat.Dense {
-	r, c := affine.w.Dims()
-	wt := mat.NewDense(r, c, nil)
-	xt := mat.NewDense(r, c, nil)
-	dx := mat.NewDense(r, c, nil)
-	wt.Inverse(affine.w)
+	wt := affine.w.T()
+	var dx mat.Dense
 	dx.Mul(dout, wt)
-
-	xt.Inverse(affine.x)
+	xt := affine.x.T()
 	affine.dw.Mul(xt, dout)
 	affine.db = sumRow(dout)
-	return dx
+	return &dx
 }
 
 func sumRow(m *mat.Dense) *mat.Dense {
 	r, c := m.Dims()
-	sumArray := make([]float64, c)
+	sumArray := make([]float64, r*c)
 	for j := 0; j < c; j++ {
 		sumValue := 0.0
 		for i := 0; i < r; i++ {
@@ -150,12 +146,17 @@ func (softmaxWithLoss *SoftmaxWithLoss) forward(x *mat.Dense, t *mat.Dense) *mat
 	return softmaxWithLoss.loss
 }
 
-func (softmaxWithLoss *SoftmaxWithLoss) backward() (dx *mat.Dense) {
+func (softmaxWithLoss *SoftmaxWithLoss) backward(dout *mat.Dense) (*mat.Dense) {
 	batchSize, c := softmaxWithLoss.t.Dims()
-	batchSizeArray := mat.NewDense(batchSize, c, make([]float64, batchSize*c, batchSize))
-	dx.Sub(softmaxWithLoss.y, softmaxWithLoss.t)
-	dx.DivElem(dx, batchSizeArray)
-	return dx
+	batchSizeArray := make([]float64, batchSize* c)
+	for i, _ := range batchSizeArray {
+		batchSizeArray[i] = float64(batchSize)
+	}
+	batchSizeMatrix := mat.NewDense(batchSize, c, batchSizeArray)
+	submat := mat.NewDense(batchSize, c, nil)
+	submat.Sub(softmaxWithLoss.y, softmaxWithLoss.t)
+	submat.DivElem(submat, batchSizeMatrix)
+	return submat
 }
 
 func exp(i, j int, v float64) float64 {
@@ -191,14 +192,24 @@ func randomArray(data []float64) []float64 {
 }
 
 type ForwardInterface interface {
-	forward() *mat.Dense
+	forward(*mat.Dense) *mat.Dense
+	backward(*mat.Dense) *mat.Dense
 }
 
-func Update(layer []ForwardInterface) {
-	for f,v := range layer {
-		fmt.Println(f)
-		fmt.Println(v)
+func Update(layer []ForwardInterface, x *mat.Dense) *mat.Dense {
+	for _, v := range layer {
+		x = v.forward(x)
 	}
+	return x
+}
+
+func BackLayer(layer []ForwardInterface, dout *mat.Dense) *mat.Dense {
+	for i := len(layer)-1; i >=0; i-- {
+		//x = v.backward(x)
+		f := layer[i]
+		dout = f.backward(dout)
+	}
+	return dout
 }
 
 func main() {
@@ -207,6 +218,7 @@ func main() {
 	inputSize := 12
 	hiddenSize := 2
 	outputSize := 10
+
 	xData := make([]float64, batchSize*inputSize)
 	tData := make([]float64, batchSize*outputSize)
 	w0Data := make([]float64, inputSize*hiddenSize)
@@ -219,25 +231,17 @@ func main() {
 	w1 := mat.NewDense(hiddenSize, outputSize, randomArray(w1Data))
 	b1 := mat.NewDense(batchSize, outputSize, randomArray(b1Data))
 	t := mat.NewDense(batchSize, outputSize, randomArray(tData))
-	//w2 := mat.NewDense(4, 9, randomArray(data))
-	//b2 := mat.NewDense(4, 9, randomArray(data))
-	affine1 := Affine{w0, b0, w0, w0, b0}
-	affine2 := Affine{w1, b1, w1, w1, b1}
-	relu1 := Relu{b0}
-	softmaxWithLoss := SoftmaxWithLoss{}
-	//fmt.Print(x)
+
 	layer := []ForwardInterface{}
 	layer = append(layer, &Affine{w0, b0, w0, w0, b0})
 	layer = append(layer, &Relu{b0})
 	layer = append(layer, &Affine{w1, b1, w1, w1, b1})
-	//layer.append(layer, &SoftmaxWithLoss{})
-	//x = affine1.forward(x)
-	//x = relu1.forward(x)
-	//x = affine2.forward(x)
-	//softmaxWithLoss.forward(x, t)
-	fmt.Println(x)
-	//sigmoid.backward(zero)
-	//softmax(zero)
-	//crossEnrtopyError(zero, zero)
-	//fmt.Print(x)
+	x = Update(layer, x)
+	softmaxWithLoss := SoftmaxWithLoss{}
+	loss := softmaxWithLoss.forward(x, t)
+	fmt.Println(loss)
+	dout := mat.NewDense(batchSize, outputSize, randomArray(tData))
+	dout =  softmaxWithLoss.backward(dout)
+	dout = BackLayer(layer,dout)
+
 }
