@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-
+    "github.com/petar/GoMNIST"
 	"gonum.org/v1/gonum/mat"
 )
 
@@ -230,7 +230,6 @@ func main() {
 	outputSize := 10
 	learningRate := 0.01
 
-
 	w0Data := make([]float64, inputSize*hiddenSize)
 	b0Data := make([]float64, batchSize*hiddenSize)
 	w1Data := make([]float64, hiddenSize*outputSize)
@@ -247,6 +246,19 @@ func main() {
 	layer = append(layer, affine1)
 	layer = append(layer, relu1)
 	layer = append(layer, affine2)
+
+
+	train, _, _ := GoMNIST.Load("/root/go/src/github.com/petar/GoMnist/data")
+	//fmt.Println(test)
+	sweeper := train.Sweep()
+	for {
+		image, label , present := sweeper.Next()
+		fmt.Println("image",image)
+		fmt.Println("label",label)
+		if !present {
+			break
+		}
+	}
 	for i :=0 ; i < 100 ; i ++ {
 		xData := make([]float64, batchSize*inputSize)
 		tData := make([]float64, batchSize*outputSize)
