@@ -6,7 +6,7 @@ import (
 	"math/rand"
     "github.com/petar/GoMNIST"
 	"gonum.org/v1/gonum/mat"
-	"encoding/binary"
+//	"encoding/binary"
 //	"reflect"
 )
 
@@ -231,30 +231,35 @@ func OneHot(x int, size int) (y []float64) {
 	return y
 }
 
-func MnistBatch(sweep *GoMNIST.Sweeper, batchSize int) (image []GoMNIST.RawImage ,label []GoMNIST.Label) {
-	//sweepv := reflect.ValueOf(sweep)
-	//fmt.Println(sweepv.Call([]reflect.Value{}))
-	//var image, label []float64
-	//var present bool
+func MnistBatch(sweep *GoMNIST.Sweeper, batchSize int) ([]float64 ,[]float64) {
+	outputSize := 10
+	image := make([]float64, 784*batchSize)
+	//label := make([]float64, 10*batchSize)
+	var label []float64
 	for i:= 0; i < batchSize ; i++ {
 		if i == 0 {
 			image_tmp, label_tmp, _ := sweep.Next()
-			fmt.Println(len(image_tmp))
-			//padding := make([]byte, 256)
-			//i := binary.BigEndian.Uint64(append(padding, image_tmp...))
-			for i := 0 ; i < 784 * 8 - 8 ; i ++ {
-				bits := binary.BigEndian.Uint64(image_tmp[i:i+8])
-				floatnum := math.Float64frombits(bits)
-				fmt.Println("binary:",floatnum)
+			for o := 0 ; o < len(image_tmp) ; o ++ {
+				image[o] = float64(image_tmp[o])
 			}
-			image = append(image,image_tmp)
-			label = append(label,label_tmp)
-			//image = float64(image_tmp)
+			labelOneHotTmp := OneHot(int(label_tmp),outputSize)
+			fmt.Println(labelOneHotTmp)
+			//label = append(label,labelOneHotTmp)
+			//for i := 0 ; i < len(labelOneHottmp) ; i ++ {
+			// 	label[i] = float64(el_tmp[i])
+			//}
 		} else {
 			image_tmp, label_tmp, _ := sweep.Next()
-			//fmt.Println(tmpp)
-			image = append(image,image_tmp)
-			label = append(label,label_tmp)
+			//fmt.Println(label_tmp)
+			for o := 0 ; i < len(image_tmp) ; o ++ {
+				image[o+i] = float64(image_tmp[o+i])
+			}
+			//labelOneHotTmp := OneHot(int(label_tmp),outputSize)
+			//label = append(label,labelOneHotTmp)
+			//for i := 0 ; i < len(label_tmp) ; i ++ {
+			// 	label_tmpFloat[i] = float64(label_tmp[i])
+			// 	label = append(label,label_tmpFloat)
+			//}
 		}
 	}
 	return image, label
