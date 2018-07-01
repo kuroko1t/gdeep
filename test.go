@@ -222,6 +222,14 @@ func constMulElem(x *mat.Dense, constNum float64) (y *mat.Dense) {
 	return y
 }
 
+func OneHot(x int, size int) (y []float64) {
+	y = make([]float64, size)
+	if x != 0 {
+		y[x-1] = 1
+	}
+	return y
+}
+
 func main() {
 	//zero.Apply(add1, zero)
 	batchSize := 3
@@ -248,13 +256,12 @@ func main() {
 	layer = append(layer, affine2)
 
 
-	train, _, _ := GoMNIST.Load("/root/go/src/github.com/petar/GoMnist/data")
-	//fmt.Println(test)
+	train, _, _ := GoMNIST.Load("./data")
 	sweeper := train.Sweep()
 	for {
 		image, label , present := sweeper.Next()
 		fmt.Println("image",image)
-		fmt.Println("label",label)
+		fmt.Println("label",label,OneHot(int(label), 10))
 		if !present {
 			break
 		}
