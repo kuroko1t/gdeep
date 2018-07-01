@@ -6,8 +6,6 @@ import (
 	"math/rand"
     "github.com/petar/GoMNIST"
 	"gonum.org/v1/gonum/mat"
-//	"encoding/binary"
-//	"reflect"
 )
 
 type Sigmoid struct {
@@ -37,11 +35,14 @@ func (relu *Relu) forward(x *mat.Dense) *mat.Dense {
 	//fmt.Println(relu.mask)
 	relu.mask.Apply(maskFunc, x)
 	x.MulElem(x, relu.mask)
+	fmt.Println("relu forward", x)
 	return x
 }
 
 func (relu *Relu) backward(dout *mat.Dense) *mat.Dense {
+	fmt.Println("relu.mask", relu.mask)
 	dout.MulElem(dout, relu.mask)
+	fmt.Println("relu backward", dout)
 	return dout
 }
 
@@ -57,6 +58,7 @@ func maskFunc(i, j int, v float64) float64 {
 func (sigmoid *Sigmoid) forward(x *mat.Dense) *mat.Dense {
 	x.Apply(sigmoid_f, x)
 	sigmoid.out = x
+	fmt.Println("sigmoid forward", x)
 	return x
 }
 
@@ -68,6 +70,7 @@ func (sigmoid *Sigmoid) backward(dout *mat.Dense) *mat.Dense {
 	//fmt.Println("koko", sigmoid.out)
 	dx.MulElem(dx, sigmoid.out)
 	dx.MulElem(dx, dout)
+	fmt.Println("sigmoid backward", dx)
 	return dx
 }
 
@@ -93,21 +96,30 @@ func (affine *Affine) init(w *mat.Dense, b *mat.Dense) {
 }
 
 func (affine *Affine) forward(x *mat.Dense) *mat.Dense {
+	//fmt.Println("affine input",x)
+	fmt.Println("affine forward affine.w",affine.w)
 	affine.x = x
 	var c mat.Dense
 	c.Mul(x, affine.w)
+	//fmt.Println("affine forward x", x)
+	//fmt.Println("affine in forward affine.w", affine.w)
+	fmt.Println("affine forward c", c)
+	//fmt.Println("affine forward affine.b", affine.b)
 	c.Add(&c, affine.b)
-	//fmt.Println(c)
+	fmt.Println("affine forward",c)
 	return &c
 }
 
 func (affine *Affine) backward(dout *mat.Dense) *mat.Dense {
+	//fmt.Println("affine.w", affine.w)
 	wt := affine.w.T()
 	var dx mat.Dense
 	dx.Mul(dout, wt)
+	//fmt.Println("affine back dx", dx)
 	xt := affine.x.T()
 	affine.dw.Mul(xt, dout)
 	affine.db = sumRow(dout)
+	//fmt.Println("affine backward", dx)
 	return &dx
 }
 
@@ -143,8 +155,11 @@ func sumCol(m *mat.Dense) *mat.Dense {
 
 func (softmaxWithLoss *SoftmaxWithLoss) forward(x *mat.Dense, t *mat.Dense) *mat.Dense {
 	softmaxWithLoss.t = t
+	//fmt.Println("softmax before",x)
 	softmaxWithLoss.y = softmax(x)
+	//fmt.Println("softmax after",softmaxWithLoss.y)
 	softmaxWithLoss.loss = crossEnrtopyError(softmaxWithLoss.y, softmaxWithLoss.t)
+	fmt.Println("softmaxwithloss forward", softmaxWithLoss.loss)
 	return softmaxWithLoss.loss
 }
 
@@ -175,7 +190,9 @@ func softmax(a *mat.Dense) *mat.Dense {
 }
 
 func crossEnrtopyError(y *mat.Dense, t *mat.Dense) *mat.Dense {
+	//fmt.Println("crossEnrtopy b",y)
 	y.Apply(crossEnrtopy, y)
+	//fmt.Println("crossEnrtopy a",y)
 	y.MulElem(t, y)
 	y.Apply(minus, sumCol(y))
 	return y
@@ -188,7 +205,7 @@ func crossEnrtopy(i, j int, v float64) float64 {
 
 func randomArray(data []float64) []float64 {
 	for i := range data {
-		data[i] = rand.NormFloat64()
+		data[i] = rand.NormFloat64() * 0.01
 	}
 	return data
 }
@@ -233,40 +250,29 @@ func OneHot(x int, size int) (y []float64) {
 
 func MnistBatch(sweep *GoMNIST.Sweeper, batchSize int) ([]float64 ,[]float64) {
 	outputSize := 10
-	image := make([]float64, 784*batchSize)
-	//label := make([]float64, 10*batchSize)
+	imagenum := 784
+	image := make([]float64, imagenum*batchSize)
 	var label []float64
 	for i:= 0; i < batchSize ; i++ {
 		if i == 0 {
 			image_tmp, label_tmp, _ := sweep.Next()
-			for o := 0 ; o < len(image_tmp) ; o ++ {
-				image[o] = float64(image_tmp[o])
+			for o := 0 ; o < len(image_tmp) ; o++ {
+				image[o] = float64(image_tmp[o])/255
 			}
-			labelOneHotTmp := OneHot(int(label_tmp),outputSize)
-			fmt.Println(labelOneHotTmp)
-			//label = append(label,labelOneHotTmp)
-			//for i := 0 ; i < len(labelOneHottmp) ; i ++ {
-			// 	label[i] = float64(el_tmp[i])
-			//}
+			label = OneHot(int(label_tmp),outputSize)
 		} else {
 			image_tmp, label_tmp, _ := sweep.Next()
-			//fmt.Println(label_tmp)
-			for o := 0 ; i < len(image_tmp) ; o ++ {
-				image[o+i] = float64(image_tmp[o+i])
+			for o := 0 ; o < len(image_tmp) ; o++ {
+				image[o+i*imagenum] = float64(image_tmp[o])/255
 			}
-			//labelOneHotTmp := OneHot(int(label_tmp),outputSize)
-			//label = append(label,labelOneHotTmp)
-			//for i := 0 ; i < len(label_tmp) ; i ++ {
-			// 	label_tmpFloat[i] = float64(label_tmp[i])
-			// 	label = append(label,label_tmpFloat)
-			//}
+			labelOneHotTmp := OneHot(int(label_tmp),outputSize)
+			label = append(label,labelOneHotTmp...)
 		}
 	}
 	return image, label
 }
 
 func main() {
-	//zero.Apply(add1, zero)
 	batchSize := 3
 	inputSize := 784
 	hiddenSize := 2
@@ -281,7 +287,10 @@ func main() {
 	b0 := mat.NewDense(batchSize, hiddenSize, randomArray(b0Data))
 	w1 := mat.NewDense(hiddenSize, outputSize, randomArray(w1Data))
 	b1 := mat.NewDense(batchSize, outputSize, randomArray(b1Data))
-
+	//fmt.Println("w0",w0)
+	//fmt.Println("b0",b0)
+	//fmt.Println("w1",w1)
+	//fmt.Println("b1",b1)
 	layer := []ForwardInterface{}
 	affine1 := &Affine{w0, b0, w0, w0, b0}
 	relu1 := &Relu{b0}
@@ -292,34 +301,30 @@ func main() {
 
 	train, _, _ := GoMNIST.Load("./data")
 	sweeper := train.Sweep()
-	xBatch , label:= MnistBatch(sweeper, 2)
-
-	//xBAtch := mat.NewDense(2, inputSize, float64(xBatch))
-	fmt.Println(xBatch)
-	fmt.Println(label)
-	//x_batch := append(x_batch,)
-	//for {
-	// 	image, label , present := sweeper.Next()
-	// 	fmt.Println("label",label,OneHot(int(label), 10))
-	// 	if !present {
-	// 		break
-	// 	}
-	//}
-	for i :=0 ; i < 2 ; i ++ {
-		xData := make([]float64, batchSize*inputSize)
-		tData := make([]float64, batchSize*outputSize)
-		x := mat.NewDense(batchSize, inputSize, randomArray(xData))
-		t := mat.NewDense(batchSize, outputSize, randomArray(tData))
+	for i :=0 ; i < 100 ; i ++ {
+		//xData := make([]float64, batchSize*inputSize)
+		//tData := make([]float64, batchSize*outputSize)
+		xData, tData:= MnistBatch(sweeper, batchSize)
+		//fmt.Println("input data",xData)
+		x := mat.NewDense(batchSize, inputSize, xData)
+		t := mat.NewDense(batchSize, outputSize, tData)
+		//x := mat.NewDense(batchSize, inputSize, randomArray(xData))
+		//t := mat.NewDense(batchSize, outputSize, randomArray(tData))
 		x = Update(layer, x)
 		softmaxWithLoss := SoftmaxWithLoss{}
 		loss := softmaxWithLoss.forward(x, t)
-		fmt.Println(loss)
+		fmt.Println("loss",loss)
 		dout := mat.NewDense(batchSize, outputSize, randomArray(tData))
 		dout =  softmaxWithLoss.backward(dout)
 		dout = BackLayer(layer,dout)
+		//fmt.Println("affine1.w",affine1.w)
+		//fmt.Println("affine1.w",affine1.dw)
 		affine1.w.Sub(affine1.w, constMulElem(affine1.dw, learningRate))
 		affine1.b.Sub(affine1.b, constMulElem(affine1.db ,learningRate))
 		affine2.w.Sub(affine2.w, constMulElem(affine2.dw ,learningRate))
 		affine2.b.Sub(affine2.b, constMulElem(affine2.db ,learningRate))
+		//fmt.Println("affine1.b",affine1.b)
+		//fmt.Println("affine2.w",affine2.w)
+		//fmt.Println("affine2.b",affine2.b)
 	}
 }
