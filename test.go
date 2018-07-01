@@ -6,6 +6,8 @@ import (
 	"math/rand"
     "github.com/petar/GoMNIST"
 	"gonum.org/v1/gonum/mat"
+	"encoding/binary"
+//	"reflect"
 )
 
 type Sigmoid struct {
@@ -31,8 +33,8 @@ type Relu struct {
 }
 
 func (relu *Relu) forward(x *mat.Dense) *mat.Dense {
-	fmt.Println(x)
-	fmt.Println(relu.mask)
+	//fmt.Println(x)
+	//fmt.Println(relu.mask)
 	relu.mask.Apply(maskFunc, x)
 	x.MulElem(x, relu.mask)
 	return x
@@ -61,9 +63,9 @@ func (sigmoid *Sigmoid) forward(x *mat.Dense) *mat.Dense {
 func (sigmoid *Sigmoid) backward(dout *mat.Dense) *mat.Dense {
 	r, c := dout.Dims()
 	dx := mat.NewDense(r, c, nil)
-	fmt.Println("koko", sigmoid.out)
+	//fmt.Println("koko", sigmoid.out)
 	dx.Apply(sigmoid_b, dout)
-	fmt.Println("koko", sigmoid.out)
+	//fmt.Println("koko", sigmoid.out)
 	dx.MulElem(dx, sigmoid.out)
 	dx.MulElem(dx, dout)
 	return dx
@@ -95,7 +97,7 @@ func (affine *Affine) forward(x *mat.Dense) *mat.Dense {
 	var c mat.Dense
 	c.Mul(x, affine.w)
 	c.Add(&c, affine.b)
-	fmt.Println(c)
+	//fmt.Println(c)
 	return &c
 }
 
@@ -205,7 +207,6 @@ func Update(layer []ForwardInterface, x *mat.Dense) *mat.Dense {
 
 func BackLayer(layer []ForwardInterface, dout *mat.Dense) *mat.Dense {
 	for i := len(layer)-1; i >=0; i-- {
-		//x = v.backward(x)
 		f := layer[i]
 		dout = f.backward(dout)
 	}
@@ -230,10 +231,39 @@ func OneHot(x int, size int) (y []float64) {
 	return y
 }
 
+func MnistBatch(sweep *GoMNIST.Sweeper, batchSize int) (image []GoMNIST.RawImage ,label []GoMNIST.Label) {
+	//sweepv := reflect.ValueOf(sweep)
+	//fmt.Println(sweepv.Call([]reflect.Value{}))
+	//var image, label []float64
+	//var present bool
+	for i:= 0; i < batchSize ; i++ {
+		if i == 0 {
+			image_tmp, label_tmp, _ := sweep.Next()
+			fmt.Println(len(image_tmp))
+			//padding := make([]byte, 256)
+			//i := binary.BigEndian.Uint64(append(padding, image_tmp...))
+			for i := 0 ; i < 784 * 8 - 8 ; i ++ {
+				bits := binary.BigEndian.Uint64(image_tmp[i:i+8])
+				floatnum := math.Float64frombits(bits)
+				fmt.Println("binary:",floatnum)
+			}
+			image = append(image,image_tmp)
+			label = append(label,label_tmp)
+			//image = float64(image_tmp)
+		} else {
+			image_tmp, label_tmp, _ := sweep.Next()
+			//fmt.Println(tmpp)
+			image = append(image,image_tmp)
+			label = append(label,label_tmp)
+		}
+	}
+	return image, label
+}
+
 func main() {
 	//zero.Apply(add1, zero)
 	batchSize := 3
-	inputSize := 12
+	inputSize := 784
 	hiddenSize := 2
 	outputSize := 10
 	learningRate := 0.01
@@ -255,18 +285,22 @@ func main() {
 	layer = append(layer, relu1)
 	layer = append(layer, affine2)
 
-
 	train, _, _ := GoMNIST.Load("./data")
 	sweeper := train.Sweep()
-	for {
-		image, label , present := sweeper.Next()
-		fmt.Println("image",image)
-		fmt.Println("label",label,OneHot(int(label), 10))
-		if !present {
-			break
-		}
-	}
-	for i :=0 ; i < 100 ; i ++ {
+	xBatch , label:= MnistBatch(sweeper, 2)
+
+	//xBAtch := mat.NewDense(2, inputSize, float64(xBatch))
+	fmt.Println(xBatch)
+	fmt.Println(label)
+	//x_batch := append(x_batch,)
+	//for {
+	// 	image, label , present := sweeper.Next()
+	// 	fmt.Println("label",label,OneHot(int(label), 10))
+	// 	if !present {
+	// 		break
+	// 	}
+	//}
+	for i :=0 ; i < 2 ; i ++ {
 		xData := make([]float64, batchSize*inputSize)
 		tData := make([]float64, batchSize*outputSize)
 		x := mat.NewDense(batchSize, inputSize, randomArray(xData))
