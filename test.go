@@ -40,7 +40,7 @@ func (relu *Relu) forward(x *mat.Dense) *mat.Dense {
 }
 
 func (relu *Relu) backward(dout *mat.Dense) *mat.Dense {
-	fmt.Println("relu.mask", relu.mask)
+	//fmt.Println("relu.mask", relu.mask)
 	dout.MulElem(dout, relu.mask)
 	fmt.Println("relu backward", dout)
 	return dout
@@ -58,7 +58,7 @@ func maskFunc(i, j int, v float64) float64 {
 func (sigmoid *Sigmoid) forward(x *mat.Dense) *mat.Dense {
 	x.Apply(sigmoid_f, x)
 	sigmoid.out = x
-	fmt.Println("sigmoid forward", x)
+	//fmt.Println("sigmoid forward", x)
 	return x
 }
 
@@ -70,7 +70,7 @@ func (sigmoid *Sigmoid) backward(dout *mat.Dense) *mat.Dense {
 	//fmt.Println("koko", sigmoid.out)
 	dx.MulElem(dx, sigmoid.out)
 	dx.MulElem(dx, dout)
-	fmt.Println("sigmoid backward", dx)
+	//fmt.Println("sigmoid backward", dx)
 	return dx
 }
 
@@ -103,8 +103,8 @@ func (affine *Affine) forward(x *mat.Dense) *mat.Dense {
 	c.Mul(x, affine.w)
 	//fmt.Println("affine forward x", x)
 	//fmt.Println("affine in forward affine.w", affine.w)
-	fmt.Println("affine forward c", c)
-	//fmt.Println("affine forward affine.b", affine.b)
+	//fmt.Println("affine forward c", c)
+	fmt.Println("affine forward affine.b", affine.b)
 	c.Add(&c, affine.b)
 	fmt.Println("affine forward",c)
 	return &c
@@ -118,8 +118,9 @@ func (affine *Affine) backward(dout *mat.Dense) *mat.Dense {
 	//fmt.Println("affine back dx", dx)
 	xt := affine.x.T()
 	affine.dw.Mul(xt, dout)
+	//fmt.Println("affine backward affine.dw", affine.dw)
 	affine.db = sumRow(dout)
-	//fmt.Println("affine backward", dx)
+	fmt.Println("affine backward", dx)
 	return &dx
 }
 
@@ -130,7 +131,9 @@ func sumRow(m *mat.Dense) *mat.Dense {
 		sumValue := 0.0
 		for i := 0; i < r; i++ {
 			sumValue += m.At(i, j)
-			sumArray[i+j*r] = sumValue
+		}
+		for i := 0; i < r; i++ {
+			sumArray[i*c + j] = sumValue
 		}
 	}
 	sums := mat.NewDense(r, c, sumArray)
@@ -144,6 +147,8 @@ func sumCol(m *mat.Dense) *mat.Dense {
 		sumValue := 0.0
 		for i := 0; i < c; i++ {
 			sumValue += m.At(j, i)
+		}
+		for i := 0; i < c; i++ {
 			sumArray[i+j*c] = sumValue
 		}
 	}
@@ -173,6 +178,7 @@ func (softmaxWithLoss *SoftmaxWithLoss) backward(dout *mat.Dense) (*mat.Dense) {
 	submat := mat.NewDense(batchSize, c, nil)
 	submat.Sub(softmaxWithLoss.y, softmaxWithLoss.t)
 	submat.DivElem(submat, batchSizeMatrix)
+	//fmt.Println("softmaxwithloss backward", submat)
 	return submat
 }
 
@@ -190,11 +196,11 @@ func softmax(a *mat.Dense) *mat.Dense {
 }
 
 func crossEnrtopyError(y *mat.Dense, t *mat.Dense) *mat.Dense {
-	//fmt.Println("crossEnrtopy b",y)
+	fmt.Println("crossEnrtopy b",y)
 	y.Apply(crossEnrtopy, y)
-	//fmt.Println("crossEnrtopy a",y)
 	y.MulElem(t, y)
 	y.Apply(minus, sumCol(y))
+	fmt.Println("crossEnrtopy a",y)
 	return y
 }
 
@@ -237,6 +243,7 @@ func constMulElem(x *mat.Dense, constNum float64) (y *mat.Dense) {
 		xData[i] = constNum
 	}
 	y = mat.NewDense(r, c, xData)
+	y.MulElem(x, y)
 	return y
 }
 
@@ -280,13 +287,14 @@ func main() {
 	learningRate := 0.01
 
 	w0Data := make([]float64, inputSize*hiddenSize)
-	b0Data := make([]float64, batchSize*hiddenSize)
+	//b0Data := make([]float64, batchSize*hiddenSize)
 	w1Data := make([]float64, hiddenSize*outputSize)
-	b1Data := make([]float64, batchSize*outputSize)
+	//b1Data := make([]float64, batchSize*outputSize)
 	w0 := mat.NewDense(inputSize, hiddenSize, randomArray(w0Data))
-	b0 := mat.NewDense(batchSize, hiddenSize, randomArray(b0Data))
+	b0 := mat.NewDense(batchSize, hiddenSize, nil)
 	w1 := mat.NewDense(hiddenSize, outputSize, randomArray(w1Data))
-	b1 := mat.NewDense(batchSize, outputSize, randomArray(b1Data))
+	b1 := mat.NewDense(batchSize, outputSize, nil)
+	//b1 := mat.NewDense(batchSize, outputSize, randomArray(b1Data))
 	//fmt.Println("w0",w0)
 	//fmt.Println("b0",b0)
 	//fmt.Println("w1",w1)
@@ -301,7 +309,7 @@ func main() {
 
 	train, _, _ := GoMNIST.Load("./data")
 	sweeper := train.Sweep()
-	for i :=0 ; i < 100 ; i ++ {
+	for i :=0 ; i < 3 ; i ++ {
 		//xData := make([]float64, batchSize*inputSize)
 		//tData := make([]float64, batchSize*outputSize)
 		xData, tData:= MnistBatch(sweeper, batchSize)
@@ -314,12 +322,15 @@ func main() {
 		softmaxWithLoss := SoftmaxWithLoss{}
 		loss := softmaxWithLoss.forward(x, t)
 		fmt.Println("loss",loss)
+		//fmt.Println("sum:",sumCol(loss))
 		dout := mat.NewDense(batchSize, outputSize, randomArray(tData))
 		dout =  softmaxWithLoss.backward(dout)
 		dout = BackLayer(layer,dout)
 		//fmt.Println("affine1.w",affine1.w)
-		//fmt.Println("affine1.w",affine1.dw)
+		//fmt.Println("constMulElem",constMulElem(affine1.dw, learningRate))
+		//fmt.Println("affine1.dw",affine1.dw)
 		affine1.w.Sub(affine1.w, constMulElem(affine1.dw, learningRate))
+		//fmt.Println("affine1.dw",affine1.dw)
 		affine1.b.Sub(affine1.b, constMulElem(affine1.db ,learningRate))
 		affine2.w.Sub(affine2.w, constMulElem(affine2.dw ,learningRate))
 		affine2.b.Sub(affine2.b, constMulElem(affine2.db ,learningRate))
