@@ -6,6 +6,7 @@ import (
 	"math/rand"
     "github.com/petar/GoMNIST"
 	"gonum.org/v1/gonum/mat"
+	"github.com/kuroko1t/gdeep/common"
 )
 
 type Sigmoid struct {
@@ -35,14 +36,16 @@ func (relu *Relu) forward(x *mat.Dense) *mat.Dense {
 	//fmt.Println(relu.mask)
 	relu.mask.Apply(maskFunc, x)
 	x.MulElem(x, relu.mask)
-	fmt.Println("relu forward", x)
+	//fmt.Println("relu forward", x)
+	common.DenseCheck(x, "Relu forward output")
 	return x
 }
 
 func (relu *Relu) backward(dout *mat.Dense) *mat.Dense {
 	//fmt.Println("relu.mask", relu.mask)
 	dout.MulElem(dout, relu.mask)
-	fmt.Println("relu backward", dout)
+	//fmt.Println("relu backward", dout)
+	common.DenseCheck(dout, "Relu backward output")
 	return dout
 }
 
@@ -97,16 +100,18 @@ func (affine *Affine) init(w *mat.Dense, b *mat.Dense) {
 
 func (affine *Affine) forward(x *mat.Dense) *mat.Dense {
 	//fmt.Println("affine input",x)
-	fmt.Println("affine forward affine.w",affine.w)
+	//fmt.Println("affine forward affine.w",affine.w)
+	common.DenseCheck(x, "affine forward input")
 	affine.x = x
 	var c mat.Dense
 	c.Mul(x, affine.w)
 	//fmt.Println("affine forward x", x)
 	//fmt.Println("affine in forward affine.w", affine.w)
 	//fmt.Println("affine forward c", c)
-	fmt.Println("affine forward affine.b", affine.b)
+	//fmt.Println("affine forward affine.b", affine.b)
 	c.Add(&c, affine.b)
-	fmt.Println("affine forward",c)
+	//fmt.Println("affine forward",c)
+	common.DenseCheck(&c, "affine forward output")
 	return &c
 }
 
@@ -120,7 +125,9 @@ func (affine *Affine) backward(dout *mat.Dense) *mat.Dense {
 	affine.dw.Mul(xt, dout)
 	//fmt.Println("affine backward affine.dw", affine.dw)
 	affine.db = sumRow(dout)
-	fmt.Println("affine backward", dx)
+	//common.DenseCheck(affine.db,"affine.db")
+	common.DenseCheck(&dx,"affine backward output")
+	//fmt.Println("affine backward", dx)
 	return &dx
 }
 
@@ -164,7 +171,8 @@ func (softmaxWithLoss *SoftmaxWithLoss) forward(x *mat.Dense, t *mat.Dense) *mat
 	softmaxWithLoss.y = softmax(x)
 	//fmt.Println("softmax after",softmaxWithLoss.y)
 	softmaxWithLoss.loss = crossEnrtopyError(softmaxWithLoss.y, softmaxWithLoss.t)
-	fmt.Println("softmaxwithloss forward", softmaxWithLoss.loss)
+	//fmt.Println("softmaxwithloss forward", softmaxWithLoss.loss)
+	common.DenseCheck(softmaxWithLoss.loss, "softmaxwithloss forward");
 	return softmaxWithLoss.loss
 }
 
@@ -196,16 +204,20 @@ func softmax(a *mat.Dense) *mat.Dense {
 }
 
 func crossEnrtopyError(y *mat.Dense, t *mat.Dense) *mat.Dense {
-	fmt.Println("crossEnrtopy b",y)
+	//fmt.Println("crossEnrtopy b",y)
 	y.Apply(crossEnrtopy, y)
 	y.MulElem(t, y)
+	common.DenseCheck(y, "crossEnrtopyError before sumcol");
+	//fmt.Println(y)
 	y.Apply(minus, sumCol(y))
-	fmt.Println("crossEnrtopy a",y)
+	//fmt.Println(y)
+	//fmt.Println("crossEnrtopy a",y)
+	common.DenseCheck(y, "crossEnrtopyError outout");
 	return y
 }
 
 func crossEnrtopy(i, j int, v float64) float64 {
-	delta := 1e-7
+	delta := 0.000001
 	return math.Log(v + delta)
 }
 
@@ -236,15 +248,21 @@ func BackLayer(layer []ForwardInterface, dout *mat.Dense) *mat.Dense {
 	return dout
 }
 
-func constMulElem(x *mat.Dense, constNum float64) (y *mat.Dense) {
+func constMulElem(x *mat.Dense, constNum float64) (*mat.Dense) {
 	r, c := x.Dims()
 	xData := make([]float64, r*c)
 	for i, _ := range  xData{
 		xData[i] = constNum
 	}
-	y = mat.NewDense(r, c, xData)
-	y.MulElem(x, y)
-	return y
+	y := mat.NewDense(r, c, xData)
+	//common.DenseCheck(y,"const learningrate")
+	x.MulElem(x, y)
+	//common.DenseCheck(x,"const output")
+	return x
+}
+
+func constMul(constnum float64) {
+
 }
 
 func OneHot(x int, size int) (y []float64) {
@@ -255,20 +273,27 @@ func OneHot(x int, size int) (y []float64) {
 	return y
 }
 
-func MnistBatch(sweep *GoMNIST.Sweeper, batchSize int) ([]float64 ,[]float64) {
+func MnistBatch(sweep **GoMNIST.Sweeper, batchSize int) ([]float64 ,[]float64, bool) {
 	outputSize := 10
 	imagenum := 784
 	image := make([]float64, imagenum*batchSize)
 	var label []float64
+	present := true
 	for i:= 0; i < batchSize ; i++ {
 		if i == 0 {
-			image_tmp, label_tmp, _ := sweep.Next()
+			image_tmp, label_tmp, present := (*sweep).Next()
+			if !present {
+				return make([]float64,2), make([]float64,2), present
+			}
 			for o := 0 ; o < len(image_tmp) ; o++ {
 				image[o] = float64(image_tmp[o])/255
 			}
 			label = OneHot(int(label_tmp),outputSize)
 		} else {
-			image_tmp, label_tmp, _ := sweep.Next()
+			image_tmp, label_tmp, present := (*sweep).Next()
+			if !present {
+				return make([]float64,2), make([]float64,2), present
+			}
 			for o := 0 ; o < len(image_tmp) ; o++ {
 				image[o+i*imagenum] = float64(image_tmp[o])/255
 			}
@@ -276,13 +301,13 @@ func MnistBatch(sweep *GoMNIST.Sweeper, batchSize int) ([]float64 ,[]float64) {
 			label = append(label,labelOneHotTmp...)
 		}
 	}
-	return image, label
+	return image, label ,present
 }
 
 func main() {
-	batchSize := 3
+	batchSize := 100
 	inputSize := 784
-	hiddenSize := 2
+	hiddenSize := 50
 	outputSize := 10
 	learningRate := 0.01
 
@@ -299,6 +324,14 @@ func main() {
 	//fmt.Println("b0",b0)
 	//fmt.Println("w1",w1)
 	//fmt.Println("b1",b1)
+	//tmpdata := []float64{2,3,4,5,5,5}//make([]float64, 2*3)
+	//tmp := mat.NewDense(2, 3, tmpdata)
+	//fmt.Println("tmp",tmp)
+	//fmt.Println("sumCol",sumCol(tmp))
+	common.DenseCheck(w0,"w0")
+	common.DenseCheck(b0,"b0")
+	common.DenseCheck(w1,"w1")
+	common.DenseCheck(b1,"b1")
 	layer := []ForwardInterface{}
 	affine1 := &Affine{w0, b0, w0, w0, b0}
 	relu1 := &Relu{b0}
@@ -309,31 +342,59 @@ func main() {
 
 	train, _, _ := GoMNIST.Load("./data")
 	sweeper := train.Sweep()
-	for i :=0 ; i < 3 ; i ++ {
+	//fmt.Printf("out sweep:%p",sweeper)
+	//for {
+	// 	_, label, present := sweeper.Next()
+	// 	fmt.Println(label)
+	// 	if !present {
+	// 		break
+	// 	}
+	//}
+	for i :=0 ; i < 1 ; i ++ {
+		fmt.Println("[iteration:",i,"]")
 		//xData := make([]float64, batchSize*inputSize)
 		//tData := make([]float64, batchSize*outputSize)
-		xData, tData:= MnistBatch(sweeper, batchSize)
+		xData, tData, present:= MnistBatch(&sweeper, batchSize)
+		if !present {
+			sweeper = train.Sweep()
+			xData, tData, present= MnistBatch(&sweeper, batchSize)
+		}
+		//fmt.Println("tData",tData)
 		//fmt.Println("input data",xData)
 		x := mat.NewDense(batchSize, inputSize, xData)
 		t := mat.NewDense(batchSize, outputSize, tData)
+		common.DenseCheck(x, "x");
 		//x := mat.NewDense(batchSize, inputSize, randomArray(xData))
 		//t := mat.NewDense(batchSize, outputSize, randomArray(tData))
 		x = Update(layer, x)
 		softmaxWithLoss := SoftmaxWithLoss{}
 		loss := softmaxWithLoss.forward(x, t)
-		fmt.Println("loss",loss)
+		common.DensePrint(loss, "loss");
+		//fmt.Println("loss",loss)
 		//fmt.Println("sum:",sumCol(loss))
 		dout := mat.NewDense(batchSize, outputSize, randomArray(tData))
-		dout =  softmaxWithLoss.backward(dout)
+		dout =	softmaxWithLoss.backward(dout)
 		dout = BackLayer(layer,dout)
 		//fmt.Println("affine1.w",affine1.w)
 		//fmt.Println("constMulElem",constMulElem(affine1.dw, learningRate))
 		//fmt.Println("affine1.dw",affine1.dw)
+		common.DenseCheck(affine1.w,"affine1.w")
+		common.DenseCheck(affine1.b,"affine1.b")
+		common.DenseCheck(affine2.w,"affine2.w")
+		common.DenseCheck(affine2.b,"affine2.b")
+		common.DenseCheck(affine1.dw,"affine1.dw")
+		common.DenseCheck(affine1.db,"affine1.db")
+		common.DenseCheck(affine2.dw,"affine2.dw")
+		common.DenseCheck(affine2.db,"affine2.db")
+		//common.DenseCheck(constMulElem(affine2.db ,learningRate), "constMulElem affine2.db")
 		affine1.w.Sub(affine1.w, constMulElem(affine1.dw, learningRate))
-		//fmt.Println("affine1.dw",affine1.dw)
 		affine1.b.Sub(affine1.b, constMulElem(affine1.db ,learningRate))
 		affine2.w.Sub(affine2.w, constMulElem(affine2.dw ,learningRate))
 		affine2.b.Sub(affine2.b, constMulElem(affine2.db ,learningRate))
+		common.DenseCheck(affine1.w,"affine1.w")
+		common.DenseCheck(affine1.b,"affine1.b")
+		common.DenseCheck(affine2.w,"affine2.w")
+		common.DenseCheck(affine2.b,"affine2.b")
 		//fmt.Println("affine1.b",affine1.b)
 		//fmt.Println("affine2.w",affine2.w)
 		//fmt.Println("affine2.b",affine2.b)
