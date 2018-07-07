@@ -1,27 +1,23 @@
 package common
 
 import (
-	//"fmt"
-	//"math"
-	//"math/rand"
-    //"github.com/petar/GoMNIST"
-	"gonum.org/v1/gonum/mat"
 	"log"
 )
 
-var debug = true
+var debug = false
 
-func DenseCheck(x *mat.Dense, name string) {
-	if debug {
+func DenseCheck(x [][]float64, name string) {
+	if !debug {
 		return
 	}
-	r, c := x.Dims()
+	r := len(x)
+	c := len(x[0])
 	min := 10.0
 	max := 0.0
 	ave := 0.0
 	for j := 0; j < r; j++ {
 		for i := 0; i < c; i++ {
-			value := x.At(j,i)
+			value := x[j][i]
 			ave += value
 			if max < value {
 				max = value
@@ -35,14 +31,15 @@ func DenseCheck(x *mat.Dense, name string) {
 	log.Printf("##%s(%d,%d)## ave:%.4f min:%.4f max:%.4f",name,r,c,ave,min,max)
 }
 
-func DensePrint(x *mat.Dense, name string) {
-	r, c := x.Dims()
+func DensePrint(x [][]float64, name string) {
+	r := len(x)
+	c := len(x[0])
 	min := 10.0
 	max := 0.0
 	ave := 0.0
 	for j := 0; j < r; j++ {
 		for i := 0; i < c; i++ {
-			value := x.At(j,i)
+			value := x[j][i]
 			ave += value
 			if max < value {
 				max = value
