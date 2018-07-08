@@ -4,41 +4,42 @@ import (
 	"math"
 	"github.com/petar/GoMNIST"
 	"github.com/kuroko1t/gdeep/common"
-	"fmt"
 	"github.com/kuroko1t/gmat"
 )
 
 type Sigmoid struct {
-	Out [][]float64
+	out [][]float64
 }
 
 type Affine struct {
 	W  [][]float64
 	B  [][]float64
-	X  [][]float64
-	Dw [][]float64
-	Db [][]float64
+	x  [][]float64
+	dw [][]float64
+	db [][]float64
+	vw [][]float64
+	vb [][]float64
 }
 
 type SoftmaxWithLoss struct {
-	Loss [][]float64
-	Y    [][]float64
-	T    [][]float64
+	loss [][]float64
+	y    [][]float64
+	t    [][]float64
 }
 
 type Relu struct {
-	Mask [][]float64
+	mask [][]float64
 }
 
 func (relu *Relu) Forward(x [][]float64) [][]float64 {
-	x = gmat.Apply(x, maskFunc)
-	x = gmat.Mul(x, relu.Mask)
+	relu.mask = gmat.Apply(x, maskFunc)
+	x = gmat.Mul(x, relu.mask)
 	common.DenseCheck(x, "Relu forward output")
 	return x
 }
 
 func (relu *Relu) Backward(dout [][]float64) [][]float64 {
-	dout = gmat.Mul(dout, relu.Mask)
+	dout = gmat.Mul(dout, relu.mask)
 	common.DenseCheck(dout, "Relu backward output")
 	return dout
 }
@@ -54,13 +55,13 @@ func maskFunc(v float64) float64 {
 
 func (sigmoid *Sigmoid) Forward(x [][]float64) [][]float64 {
 	x = gmat.Apply(x, sigmoid_f)
-	sigmoid.Out = x
+	sigmoid.out = x
 	return x
 }
 
 func (sigmoid *Sigmoid) Backward(dout [][]float64) [][]float64 {
 	dx := gmat.Apply(dout, sigmoid_b)
-	dx = gmat.Mul(dx, sigmoid.Out)
+	dx = gmat.Mul(dx, sigmoid.out)
 	dx = gmat.Mul(dx, dout)
 	return dx
 }
@@ -77,15 +78,10 @@ func add1(v float64) float64 {
 	return v + 1
 }
 
-//func (affine *Affine) init(w [][]float64, b [][]float64) {
-// 	affine.W = w
-// 	affine.B = b
-//}
-
 func (affine *Affine) Forward(x [][]float64) [][]float64 {
 	common.DenseCheck(x, "affine forward input")
-	fmt.Println("x",x)
-	affine.X = x
+	//fmt.Println("x",x)
+	affine.x = x
 	c := gmat.Dot(x, affine.W)
 	c = gmat.Add(c, affine.B)
 	common.DenseCheck(c, "affine forward output")
@@ -95,31 +91,33 @@ func (affine *Affine) Forward(x [][]float64) [][]float64 {
 func (affine *Affine) Backward(dout [][]float64) [][]float64 {
 	wt := gmat.T(affine.W)
 	//fmt.Println(dout)
-	common.DenseCheck(dout, "affine backward dout")
-	common.DenseCheck(wt, "affine backward wt")
+	//common.DenseCheck(wt, "affine backward wt")
 	dx := gmat.Dot(dout, wt)
-	xt := gmat.T(affine.X)
-	fmt.Println("dout",dout)
-	fmt.Println("xt",xt)
-	affine.Dw = gmat.Dot(xt, dout)
-	common.DenseCheck(affine.Dw, "affine backward affine.Dw")
-	affine.Db = gmat.SumRow(dout)
+	//common.DenseCheck(affine.X, "affine backward affine.X")
+	xt := gmat.T(affine.x)
+	//fmt.Println("dout",dout)
+	//fmt.Println("xt",xt)
+	//common.DenseCheck(dout, "affine backward dout")
+	//common.DenseCheck(xt, "affine backward xt")
+	affine.dw = gmat.Dot(xt, dout)
+	//common.DenseCheck(affine.Dw, "affine backward affine.Dw")
+	affine.db = gmat.SumRow(dout)
 	common.DenseCheck(dx,"affine backward output")
-	common.DenseCheck(affine.Dw,"affine backward dw")
+	//common.DenseCheck(affine.Dw,"affine backward dw")
 	return dx
 }
 
 func (softmaxWithLoss *SoftmaxWithLoss) Forward(x [][]float64, t [][]float64) [][]float64 {
-	softmaxWithLoss.T = t
-	softmaxWithLoss.Y = softmax(x)
-	softmaxWithLoss.Loss = crossEnrtopyError(softmaxWithLoss.Y, softmaxWithLoss.T)
-	common.DenseCheck(softmaxWithLoss.Loss, "softmaxwithloss forward")
-	return softmaxWithLoss.Loss
+	softmaxWithLoss.t = t
+	softmaxWithLoss.y = softmax(x)
+	softmaxWithLoss.loss = crossEnrtopyError(softmaxWithLoss.y, softmaxWithLoss.t)
+	common.DenseCheck(softmaxWithLoss.loss, "softmaxwithloss forward")
+	return softmaxWithLoss.loss
 }
 
 func (softmaxWithLoss *SoftmaxWithLoss) Backward(dout [][]float64) ([][]float64) {
-	batchSize := len(softmaxWithLoss.T)
-	submat := gmat.Sub(softmaxWithLoss.Y, softmaxWithLoss.T)
+	batchSize := len(softmaxWithLoss.t)
+	submat := gmat.Sub(softmaxWithLoss.y, softmaxWithLoss.t)
 	submat = gmat.MulE(submat, 1/float64(batchSize))
 	common.DenseCheck(submat, "softmaxwithloss backward")
 	return submat
@@ -154,6 +152,7 @@ type LayerInterface interface {
 	Forward([][]float64) [][]float64
 	Backward([][]float64) [][]float64
 	SGDUpdate(*SGD)
+	MomentumUpdate(*Momentum)
 }
 
 func ForwardLayer(layer []LayerInterface, x [][]float64) [][]float64 {
