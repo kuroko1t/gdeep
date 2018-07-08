@@ -4,7 +4,7 @@ import (
 	"log"
 )
 
-var debug = false
+var debug = true
 
 func DenseCheck(x [][]float64, name string) {
 	if !debug {

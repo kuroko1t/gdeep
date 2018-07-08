@@ -9,11 +9,11 @@ import (
 )
 
 func main() {
-	batchSize := 100
+	batchSize := 2
 	inputSize := 784
 	hiddenSize := 50
 	outputSize := 10
-	learningRate := 0.01
+	learningRate := 0.1
 
 	w0 := gmat.RandomArray(inputSize, hiddenSize, 0.01)
 	b0 := gmat.RandomArray(batchSize, hiddenSize, 0.0)
@@ -24,18 +24,22 @@ func main() {
 	common.DenseCheck(b0,"b0")
 	common.DenseCheck(w1,"w1")
 	common.DenseCheck(b1,"b1")
-	layer := []gdeep.ForwardInterface{}
+	layer := []gdeep.LayerInterface{}
 	affine1 := &gdeep.Affine{w0, b0, w0, w0, b0}
 	relu1 := &gdeep.Relu{b0}
 	affine2 := &gdeep.Affine{w1, b1, w1, w1, b1}
 	layer = append(layer, affine1)
 	layer = append(layer, relu1)
 	layer = append(layer, affine2)
+
+	//sgd := &gdeep.SGD{learningRate}
+
 	train, _, _ := GoMNIST.Load("./data")
 	sweeper := train.Sweep()
-	for i :=0 ; i < 3 ; i ++ {
+	for i :=0 ; i < 1 ; i ++ {
 		fmt.Println("[iteration:",i,"]")
 		x, t, present:= gdeep.MnistBatch(&sweeper, batchSize)
+		fmt.Println(t)
 		if !present {
 			sweeper = train.Sweep()
 			x, t, present = gdeep.MnistBatch(&sweeper, batchSize)
@@ -48,6 +52,7 @@ func main() {
 		dout := gmat.MakeInit(batchSize, outputSize, 1.0)
 		dout =	softmaxWithLoss.Backward(dout)
 		dout = gdeep.BackLayer(layer,dout)
+		//gdeep.SGDUpdateLayer(layer, sgd)
 		common.DenseCheck(affine1.W,"affine1.w")
 		common.DenseCheck(affine1.B,"affine1.b")
 		common.DenseCheck(affine2.W,"affine2.w")

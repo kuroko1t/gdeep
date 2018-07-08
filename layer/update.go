@@ -9,11 +9,19 @@ type SGD struct {
 	LearningRate float64
 }
 
-type UpdateInterface interface {
-	Update([][]float64) [][]float64
+func (affine *Affine) SGDUpdate(sgd *SGD) {
+	affine.W = gmat.Sub(affine.W, gmat.MulE(affine.Dw, sgd.LearningRate))
+	affine.B = gmat.Sub(affine.B, gmat.MulE(affine.Db, sgd.LearningRate))
+	return
 }
 
-func (sgd *SGD) Update(x [][]float64) [][]float64 {
-	y := gmat.MulE(x, (1.0 - sgd.LearningRate))
-	return y
+func (relu *Relu) SGDUpdate(sgd *SGD) {
+	return
+}
+
+func SGDUpdateLayer(layer []LayerInterface, sgd *SGD) {
+	for _, v := range layer {
+		v.SGDUpdate(sgd)
+	}
+	return
 }

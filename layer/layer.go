@@ -4,6 +4,7 @@ import (
 	"math"
 	"github.com/petar/GoMNIST"
 	"github.com/kuroko1t/gdeep/common"
+	"fmt"
 	"github.com/kuroko1t/gmat"
 )
 
@@ -76,13 +77,14 @@ func add1(v float64) float64 {
 	return v + 1
 }
 
-func (affine *Affine) init(w [][]float64, b [][]float64) {
-	affine.W = w
-	affine.B = b
-}
+//func (affine *Affine) init(w [][]float64, b [][]float64) {
+// 	affine.W = w
+// 	affine.B = b
+//}
 
 func (affine *Affine) Forward(x [][]float64) [][]float64 {
 	common.DenseCheck(x, "affine forward input")
+	fmt.Println("x",x)
 	affine.X = x
 	c := gmat.Dot(x, affine.W)
 	c = gmat.Add(c, affine.B)
@@ -92,11 +94,18 @@ func (affine *Affine) Forward(x [][]float64) [][]float64 {
 
 func (affine *Affine) Backward(dout [][]float64) [][]float64 {
 	wt := gmat.T(affine.W)
+	//fmt.Println(dout)
+	common.DenseCheck(dout, "affine backward dout")
+	common.DenseCheck(wt, "affine backward wt")
 	dx := gmat.Dot(dout, wt)
 	xt := gmat.T(affine.X)
+	fmt.Println("dout",dout)
+	fmt.Println("xt",xt)
 	affine.Dw = gmat.Dot(xt, dout)
+	common.DenseCheck(affine.Dw, "affine backward affine.Dw")
 	affine.Db = gmat.SumRow(dout)
 	common.DenseCheck(dx,"affine backward output")
+	common.DenseCheck(affine.Dw,"affine backward dw")
 	return dx
 }
 
@@ -104,7 +113,7 @@ func (softmaxWithLoss *SoftmaxWithLoss) Forward(x [][]float64, t [][]float64) []
 	softmaxWithLoss.T = t
 	softmaxWithLoss.Y = softmax(x)
 	softmaxWithLoss.Loss = crossEnrtopyError(softmaxWithLoss.Y, softmaxWithLoss.T)
-	common.DenseCheck(softmaxWithLoss.Loss, "softmaxwithloss forward");
+	common.DenseCheck(softmaxWithLoss.Loss, "softmaxwithloss forward")
 	return softmaxWithLoss.Loss
 }
 
@@ -112,6 +121,7 @@ func (softmaxWithLoss *SoftmaxWithLoss) Backward(dout [][]float64) ([][]float64)
 	batchSize := len(softmaxWithLoss.T)
 	submat := gmat.Sub(softmaxWithLoss.Y, softmaxWithLoss.T)
 	submat = gmat.MulE(submat, 1/float64(batchSize))
+	common.DenseCheck(submat, "softmaxwithloss backward")
 	return submat
 }
 
@@ -140,19 +150,20 @@ func crossEnrtopy(v float64) float64 {
 	return math.Log(v + delta)
 }
 
-type ForwardInterface interface {
+type LayerInterface interface {
 	Forward([][]float64) [][]float64
 	Backward([][]float64) [][]float64
+	SGDUpdate(*SGD)
 }
 
-func ForwardLayer(layer []ForwardInterface, x [][]float64) [][]float64 {
+func ForwardLayer(layer []LayerInterface, x [][]float64) [][]float64 {
 	for _, v := range layer {
 		x = v.Forward(x)
 	}
 	return x
 }
 
-func BackLayer(layer []ForwardInterface, dout [][]float64) [][]float64 {
+func BackLayer(layer []LayerInterface, dout [][]float64) [][]float64 {
 	for i := len(layer)-1; i >=0; i-- {
 		f := layer[i]
 		dout = f.Backward(dout)
@@ -162,9 +173,7 @@ func BackLayer(layer []ForwardInterface, dout [][]float64) [][]float64 {
 
 func OneHot(x int, size int) (y []float64) {
 	y = make([]float64, size)
-	if x != 0 {
-		y[x-1] = 1
-	}
+	y[x] = 1
 	return y
 }
 
