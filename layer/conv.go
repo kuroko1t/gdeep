@@ -7,31 +7,41 @@ import (
 	"github.com/kuroko1t/gmat"
 )
 
-func im2col(input [][][][]float64, filterH int, filterW int, stride int, pad int) [][][][][][]float64{
-	n := len(input)
-	c := len(input[0])
-	h := len(input[0][0])
-	w := len(input[0][0][0])
-	outH := (h + 2*pad - filterH) % (stride + 1)
-	outW := (w + 2*pad - filterW) % (stride + 1)
-	var padding =[][]int{{0,0}, {0,0}, {pad, pad}, {pad, pad}}
-	img := gmat.Pad4D(input, padding)
-	col := gmat.Make6D(n, c, filterH, filterW, outH, outW)
-	for y:=0 ;y <= filterH; y++ {
-		yMax := y + stride*outH
-		for x:=0 ;x <= filterW; x++ {
-			xMax := x + stride*outW
-			for i := range img {
-				for j := range img[i] {
-					for k :=0; k <=yMax; i += stride {
-						for l :=0; l <=xMax; l += stride {
-							col[i][j][y][x][k][l]= img[i][j][k][l]
-						}
-					}
-				}
-			}
-		}
-	}
-	colTran := gmat.Trans6D(col, 0,4,5,1,2,3)
-	return colTran
+type Conv struct {
+	W  [][][][]float64
+	B  [][]float64
+	stride int
+	pad int
+	x [][][][]float64
+	col [][]float64
+	colW [][]float64
+	dw [][]float64
+	db [][]float64
+}
+
+func (conv *Conv) Forward(x [][][][]float64) [][][][]float64 {
+	fn, _, fh, fw := gmat.Shape4D(conv.W)
+	n, _, h, w := gmat.Shape4D(x)
+	outH := 1 + (h + 2 * conv.pad - fh) / conv.stride
+	outW := 1 + (w + 2 * conv.pad - fw) / conv.stride
+
+	col := im2col(x, fh, fw, conv.stride, conv.pad)
+	colW := gmat.T(gmat.Reshape4D(conv.W, fn, -1))
+
+	out := gmat.Add(gmat.Dot(col, colW), conv.B)
+	out4d := gmat.Trans4D(gmat.Reshape2D(out, n, outH, outW, -1), 0, 3, 1, 2)
+
+	conv.x = x
+	conv.col = col
+	conv.colW = colW
+	return out4d
+}
+
+func (conv *Conv) Backward(dout [][][][]float64) [][][][]float64 {
+	fn, fc, fh, fw := gmat.Shape4D(conv.W)
+	dout = gmat.Reshape4D(gmat.Trans4D(dout, 0, 2, 3, 1),-1 , fn)
+
+	conv.db = gmat.SumRow(dout)
+
+	return dout
 }
