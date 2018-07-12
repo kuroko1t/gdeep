@@ -15,7 +15,7 @@ type Conv struct {
 	x [][][][]float64
 	col [][]float64
 	colW [][]float64
-	dw [][]float64
+	dw [][][][]float64
 	db [][]float64
 }
 
@@ -39,9 +39,39 @@ func (conv *Conv) Forward(x [][][][]float64) [][][][]float64 {
 
 func (conv *Conv) Backward(dout [][][][]float64) [][][][]float64 {
 	fn, fc, fh, fw := gmat.Shape4D(conv.W)
-	dout = gmat.Reshape4D(gmat.Trans4D(dout, 0, 2, 3, 1),-1 , fn)
+	dout2D := gmat.Reshape4D(gmat.Trans4D(dout, 0, 2, 3, 1),-1 , fn)
+	conv.db = gmat.SumRow(dout2D)
+	dw2D := gmat.Dot(gmat.T(conv.col),dout2D)
+	conv.dw = gmat.Reshape2D(gmat.Trans2D(dw2D, 1, 0), fn, fc, fh, fw)
 
-	conv.db = gmat.SumRow(dout)
+	dcol := gmat.Dot(dout2D, gmat.T(conv.colW))
+	n,c,h,w := gmat.Shape4D(conv.x)
+	xshape := []int{n,c,h,w}
+	dx := col2im(dcol, xshape, fh, fw, conv.stride, conv.pad)
+	return dx
+}
 
-	return dout
+
+type Pooling struct {
+	poolH int
+	poolW int
+	stride int
+	pad int
+	x [][][][]float64
+	argMax [][]int
+	col [][]float64
+}
+
+func (pool *Pooling) Forward(x [][][][]float64) [][][][]float64 {
+	n,c,h,w := gmat.Shape4D(x)
+	outH := 1 + (h - pool.poolH) / pool.stride
+	outW := 1 + (w - pool.poolW) / pool.stride
+
+	col2D := im2col(x, pool.poolH, pool.poolW, pool.stride, pool.pad)
+	col := gmat.Reshape2D2D(col2D,-1, pool.poolH* pool.poolW)
+	out2D := gmat.MaxCol(col)
+	out := gmat.Trans4D(gmat.Reshape2D(out2D, n, outH, outW, c), 0, 3, 1, 2)
+	pool.x = x
+	pool.argMax = gmat.ArgMaxCol(col)
+	return out
 }

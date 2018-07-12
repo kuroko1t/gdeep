@@ -90,17 +90,13 @@ func (affine *Affine) Forward(x [][]float64) [][]float64 {
 
 func (affine *Affine) Backward(dout [][]float64) [][]float64 {
 	wt := gmat.T(affine.W)
-	//fmt.Println(dout)
 	//common.DenseCheck(wt, "affine backward wt")
 	dx := gmat.Dot(dout, wt)
 	//common.DenseCheck(affine.X, "affine backward affine.X")
 	xt := gmat.T(affine.x)
-	//fmt.Println("dout",dout)
-	//fmt.Println("xt",xt)
 	//common.DenseCheck(dout, "affine backward dout")
 	//common.DenseCheck(xt, "affine backward xt")
 	affine.dw = gmat.Dot(xt, dout)
-	//common.DenseCheck(affine.Dw, "affine backward affine.Dw")
 	affine.db = gmat.SumRow(dout)
 	common.DenseCheck(dx,"affine backward output")
 	//common.DenseCheck(affine.Dw,"affine backward dw")
