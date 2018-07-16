@@ -1,9 +1,6 @@
-package gdeep
+package layer
 
 import (
-	//"math"
-	//"github.com/petar/GoMNIST"
-	//"github.com/kuroko1t/gdeep/common"
 	"github.com/kuroko1t/gmat"
 )
 
