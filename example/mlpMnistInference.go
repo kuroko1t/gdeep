@@ -1,11 +1,3 @@
-# gdeep
-deep learning library. still in production..
-
-# Sample
-
-* mlp sample
-
-```golang
 package main
 
 import (
@@ -31,10 +23,12 @@ func main() {
 	dense1 := &gdeep.Dense{W:w0, B:b0}
 	relu1 := &gdeep.Relu{}
 	dense2 := &gdeep.Dense{W:w1, B:b1}
+	softmaxWithLoss := gdeep.SoftmaxWithLoss{}
 	layer = append(layer, dense1)
 	layer = append(layer, relu1)
 	layer = append(layer, dense2)
 
+	//sgd := &gdeep.SGD{learningRate}
 	momentum := &gdeep.Momentum{learningRate,0.9}
 
 	train, _, _ := GoMNIST.Load("./data")
@@ -46,18 +40,16 @@ func main() {
 			sweeper = train.Sweep()
 			x, t, present = gdeep.MnistBatch(&sweeper, batchSize)
 		}
+		//if i == 99 {
+		// 	gdeep.Saver(layer,"./sample.gob")
+		//}
 		x = gdeep.ForwardLayer(layer, x)
-		softmaxWithLoss := gdeep.SoftmaxWithLoss{}
 		loss := softmaxWithLoss.Forward(x, t)
 		gdeep.AvePrint(loss, "loss");
 		dout := gmat.MakeInit(batchSize, outputSize, 1.0)
 		dout = softmaxWithLoss.Backward(dout)
 		dout = gdeep.BackLayer(layer,dout)
+		//gdeep.SGDUpdateLayer(layer, sgd)
 		gdeep.MomentumUpdateLayer(layer, momentum)
 	}
 }
-```
-
-# License
-
-gdeep is licensed under the Apache License, Version2.0

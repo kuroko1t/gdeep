@@ -75,6 +75,19 @@ func (softmaxWithLoss *SoftmaxWithLoss) Backward(dout [][]float64) ([][]float64)
 	return submat
 }
 
+func Accuracy(x [][]float64, t [][]float64) float64{
+	indexArray := gmat.ArgMaxCol(x)
+	n, _ := gmat.Shape2D(x)
+	//nt, mt := gmat.Shape2D(t)
+	accuracy := 0
+	for i := 0 ; i < n ; i++ {
+		if t[i][indexArray[i][0]] > 0.9 {
+			accuracy += 1
+		}
+	}
+	return float64(accuracy) / float64(n)
+}
+
 type LayerInterface interface {
 	Forward([][]float64) [][]float64
 	Backward([][]float64) [][]float64
