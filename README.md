@@ -73,6 +73,8 @@ func main() {
 }
 ```
 
+![accuracy](https://github.com/kuroko1t/gdeep/tree/master/img/accuracy.png)
+
 # License
 
 gdeep is licensed under the Apache License, Version2.0

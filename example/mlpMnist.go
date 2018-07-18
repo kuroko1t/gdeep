@@ -67,5 +67,5 @@ func main() {
 		accuracy += gdeep.Accuracy(x, t)
 	}
 	accuracy = accuracy / float64(iterBach)
-	fmt.Println("accuracy:", accuracy)
+	fmt.Println("test accuracy:", accuracy)
 }
