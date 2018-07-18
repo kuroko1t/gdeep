@@ -73,7 +73,7 @@ func main() {
 }
 ```
 
-![accuracy](https://github.com/kuroko1t/gdeep/tree/master/img/accuracy.png)
+![accuracy](https://github.com/kuroko1t/gdeep/blob/master/img/accuracy.png?raw=true)
 
 # License
 
