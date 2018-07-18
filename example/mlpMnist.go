@@ -13,52 +13,59 @@ func main() {
 	hiddenSize := 50
 	outputSize := 10
 	learningRate := 0.01
+	iterationNum := 2000
 
-	w0 := gmat.RandomNorm2D(inputSize, hiddenSize, 0.01)
-	b0 := gmat.RandomNorm2D(batchSize, hiddenSize, 0.0)
-	w1 := gmat.RandomNorm2D(hiddenSize, outputSize, 0.01)
-	b1 := gmat.RandomNorm2D(batchSize, outputSize, 0.0)
+	w0 := gmat.HeNorm2D(inputSize, hiddenSize)
+	b0 := gmat.Make(batchSize, hiddenSize)
+	w1 := gmat.HeNorm2D(hiddenSize, outputSize)
+	b1 := gmat.Make(batchSize, outputSize)
 
 	layer := []gdeep.LayerInterface{}
-	dense1 := &gdeep.Dense{W:w0, B:b0}
+	dense1 := &gdeep.Dense{W: w0, B: b0}
 	relu1 := &gdeep.Relu{}
-	dense2 := &gdeep.Dense{W:w1, B:b1}
+	dense2 := &gdeep.Dense{W: w1, B: b1}
 	softmaxWithLoss := gdeep.SoftmaxWithLoss{}
 	layer = append(layer, dense1)
 	layer = append(layer, relu1)
 	layer = append(layer, dense2)
 
 	//sgd := &gdeep.SGD{learningRate}
-	momentum := &gdeep.Momentum{learningRate,0.9}
+	momentum := &gdeep.Momentum{learningRate, 0.9}
 
-	train, _, _ := GoMNIST.Load("./data")
-	sweeper := train.Sweep()
-	loss := make([][]float64, 2)
-	epochVal := false
-	epochNum := 0
-	for i :=0 ; i < 10000 ; i ++ {
-		x, t, present:= gdeep.MnistBatch(&sweeper, batchSize)
-		if !present || len(x) < batchSize{
-			sweeper = train.Sweep()
-			x, t, present = gdeep.MnistBatch(&sweeper, batchSize)
-			epochVal = true
-			epochNum ++
+	train, test, _ := GoMNIST.Load("./data")
+	trainDataSize := len(train.ImagesFloatNorm)
+	testDataSize := len(test.ImagesFloatNorm)
+	iter := 0
+	for i := 0; i < iterationNum; i++ {
+		if (i+2)*batchSize > trainDataSize {
+			iter = 0
 		}
+		x := train.ImagesFloatNorm[:][iter*batchSize : (iter+1)*batchSize]
+		t := train.LabelsOneHot[:][iter*batchSize : (iter+1)*batchSize]
 		//if i == 99 {
 		// 	gdeep.Saver(layer,"./sample.gob")
 		//}
 		x = gdeep.ForwardLayer(layer, x)
-		loss = softmaxWithLoss.Forward(x, t)
+		loss := softmaxWithLoss.Forward(x, t)
 		dout := gmat.MakeInit(batchSize, outputSize, 1.0)
 		dout = softmaxWithLoss.Backward(dout)
-		dout = gdeep.BackLayer(layer,dout)
+		dout = gdeep.BackLayer(layer, dout)
 		//gdeep.SGDUpdateLayer(layer, sgd)
 		gdeep.MomentumUpdateLayer(layer, momentum)
-		if epochVal{
-			fmt.Println("[epoch:",epochNum,"]")
-			gdeep.AvePrint(loss, "loss")
-			fmt.Println("accuracy:",gdeep.Accuracy(x,t))
-			epochVal = false
-		}
+		fmt.Println("[iteration:", i, "]")
+		gdeep.AvePrint(loss, "loss")
+		iter++
 	}
+
+	// test accuracy
+	accuracy := 0.0
+	iterBach := testDataSize / batchSize
+	for i := 0; i < iterBach; i++ {
+		x := test.ImagesFloatNorm[:][i*batchSize : (i+1)*batchSize]
+		t := test.LabelsOneHot[:][i*batchSize : (i+1)*batchSize]
+		x = gdeep.ForwardLayer(layer, x)
+		accuracy += gdeep.Accuracy(x, t)
+	}
+	accuracy = accuracy / float64(iterBach)
+	fmt.Println("accuracy:", accuracy)
 }

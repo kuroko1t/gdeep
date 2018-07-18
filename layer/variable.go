@@ -14,6 +14,12 @@ type Dense struct {
 	Vb [][]float64
 }
 
+type Dropout struct {
+	Mask  [][]float64
+	Train bool
+	Ratio float64
+}
+
 type SoftmaxWithLoss struct {
 	Loss [][]float64
 	Y    [][]float64
