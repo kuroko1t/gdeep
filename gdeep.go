@@ -1,7 +1,6 @@
 package gdeep
 
 import (
-	"fmt"
 	"github.com/kuroko1t/GoMNIST"
 	"github.com/kuroko1t/gdeep/common"
 	"github.com/kuroko1t/gdeep/layer"
@@ -85,7 +84,6 @@ func (drop *Dropout) Forward(x [][]float64) [][]float64 {
 		drop.Mask = gmat.Apply(randomArray, layer.MaskFunc)
 		return gmat.Mul(x, drop.Mask)
 	} else {
-		fmt.Println("test")
 		return gmat.MulE(x, 1.0-drop.Ratio)
 	}
 }
