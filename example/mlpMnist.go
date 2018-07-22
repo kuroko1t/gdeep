@@ -15,18 +15,18 @@ func main() {
 
 	batchSize := 128
 	inputSize := 784
-	hiddenSize := 512
+	hiddenSize := 20
 	outputSize := 10
 	learningRate := 0.01
-	epochNum := 20
+	epochNum := 1
 	iterationNum := trainDataSize * epochNum / batchSize
 
 	w0 := gmat.HeNorm2D(inputSize, hiddenSize)
-	b0 := gmat.Make(batchSize, hiddenSize)
+	b0 := gmat.Make2D(batchSize, hiddenSize)
 	w1 := gmat.HeNorm2D(hiddenSize, hiddenSize)
-	b1 := gmat.Make(batchSize, hiddenSize)
+	b1 := gmat.Make2D(batchSize, hiddenSize)
 	w2 := gmat.HeNorm2D(hiddenSize, outputSize)
-	b2 := gmat.Make(batchSize, outputSize)
+	b2 := gmat.Make2D(batchSize, outputSize)
 
 	layer := []gdeep.LayerInterface{}
 	dense1 := &gdeep.Dense{W: w0, B: b0}
@@ -50,8 +50,10 @@ func main() {
 		if (i+2)*batchSize > trainDataSize {
 			iter = 0
 		}
-		x := train.ImagesFloatNorm[:][iter*batchSize : (iter+1)*batchSize]
-		t := train.LabelsOneHot[:][iter*batchSize : (iter+1)*batchSize]
+		imageBatch := train.ImagesFloatNorm[:][iter*batchSize : (iter+1)*batchSize]
+		lagelBatch := train.LabelsOneHot[:][iter*batchSize : (iter+1)*batchSize]
+		x := gmat.Make2DInitArray(imageBatch)
+		t := gmat.Make2DInitArray(lagelBatch)
 		//if i == 99 {
 		// 	gdeep.Saver(layer,"./sample.gob")
 		//}
@@ -73,8 +75,10 @@ func main() {
 	dropout1.Train = false
 	dropout2.Train = false
 	for i := 0; i < iterBach; i++ {
-		x := test.ImagesFloatNorm[:][i*batchSize : (i+1)*batchSize]
-		t := test.LabelsOneHot[:][i*batchSize : (i+1)*batchSize]
+		imageBatch := test.ImagesFloatNorm[:][i*batchSize : (i+1)*batchSize]
+		lagelBatch := test.LabelsOneHot[:][i*batchSize : (i+1)*batchSize]
+		x := gmat.Make2DInitArray(imageBatch)
+		t := gmat.Make2DInitArray(lagelBatch)
 		x = gdeep.ForwardLayer(layer, x)
 		accuracy += gdeep.Accuracy(x, t)
 	}

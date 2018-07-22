@@ -1,33 +1,37 @@
 package layer
 
+import (
+	"github.com/kuroko1t/gmat"
+)
+
 type Sigmoid struct {
-	Out [][]float64
+	Out gmat.Data
 }
 
 type Dense struct {
-	W  [][]float64
-	B  [][]float64
-	X  [][]float64
-	Dw [][]float64
-	Db [][]float64
-	Vw [][]float64
-	Vb [][]float64
+	W  gmat.Data
+	B  gmat.Data
+	X  gmat.Data
+	Dw gmat.Data
+	Db gmat.Data
+	Vw gmat.Data
+	Vb gmat.Data
 }
 
 type Dropout struct {
-	Mask  [][]float64
+	Mask  gmat.Data
 	Train bool
 	Ratio float64
 }
 
 type SoftmaxWithLoss struct {
-	Loss [][]float64
-	Y    [][]float64
-	T    [][]float64
+	Loss gmat.Data
+	Y    gmat.Data
+	T    gmat.Data
 }
 
 type Relu struct {
-	Mask [][]float64
+	Mask gmat.Data
 }
 
 type SGD struct {

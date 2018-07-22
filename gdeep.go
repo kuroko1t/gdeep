@@ -1,12 +1,14 @@
 package gdeep
 
 import (
-	"github.com/kuroko1t/GoMNIST"
+	//"github.com/kuroko1t/GoMNIST"
 	"github.com/kuroko1t/gdeep/common"
 	"github.com/kuroko1t/gdeep/layer"
 	"github.com/kuroko1t/gmat"
 	"math/rand"
 )
+
+//type Data data.Data
 
 type Relu layer.Relu
 type Sigmoid layer.Sigmoid
@@ -16,33 +18,33 @@ type SoftmaxWithLoss layer.SoftmaxWithLoss
 type SGD layer.SGD
 type Momentum layer.Momentum
 
-func (relu *Relu) Forward(x [][]float64) [][]float64 {
+func (relu *Relu) Forward(x gmat.Data) gmat.Data {
 	relu.Mask = gmat.Apply(x, layer.MaskFunc)
 	x = gmat.Mul(x, relu.Mask)
 	common.DenseCheck(x, "Relu forward output")
 	return x
 }
 
-func (relu *Relu) Backward(dout [][]float64) [][]float64 {
+func (relu *Relu) Backward(dout gmat.Data) gmat.Data {
 	dout = gmat.Mul(dout, relu.Mask)
 	common.DenseCheck(dout, "Relu backward output")
 	return dout
 }
 
-func (sigmoid *Sigmoid) Forward(x [][]float64) [][]float64 {
+func (sigmoid *Sigmoid) Forward(x gmat.Data) gmat.Data {
 	x = gmat.Apply(x, layer.Sigmoid_f)
 	sigmoid.Out = x
 	return x
 }
 
-func (sigmoid *Sigmoid) Backward(dout [][]float64) [][]float64 {
+func (sigmoid *Sigmoid) Backward(dout gmat.Data) gmat.Data {
 	dx := gmat.Apply(dout, layer.Sigmoid_b)
 	dx = gmat.Mul(dx, sigmoid.Out)
 	dx = gmat.Mul(dx, dout)
 	return dx
 }
 
-func (dense *Dense) Forward(x [][]float64) [][]float64 {
+func (dense *Dense) Forward(x gmat.Data) gmat.Data {
 	common.DenseCheck(x, "dense forward input")
 	dense.X = x
 	c := gmat.Dot(x, dense.W)
@@ -51,7 +53,7 @@ func (dense *Dense) Forward(x [][]float64) [][]float64 {
 	return c
 }
 
-func (dense *Dense) Backward(dout [][]float64) [][]float64 {
+func (dense *Dense) Backward(dout gmat.Data) gmat.Data {
 	wt := gmat.T(dense.W)
 	dx := gmat.Dot(dout, wt)
 	xt := gmat.T(dense.X)
@@ -61,7 +63,7 @@ func (dense *Dense) Backward(dout [][]float64) [][]float64 {
 	return dx
 }
 
-func (softmaxWithLoss *SoftmaxWithLoss) Forward(x [][]float64, t [][]float64) [][]float64 {
+func (softmaxWithLoss *SoftmaxWithLoss) Forward(x gmat.Data, t gmat.Data) gmat.Data {
 	softmaxWithLoss.T = t
 	softmaxWithLoss.Y = layer.Softmax(x)
 	softmaxWithLoss.Loss = layer.CrossEnrtopyError(softmaxWithLoss.Y, softmaxWithLoss.T)
@@ -69,18 +71,19 @@ func (softmaxWithLoss *SoftmaxWithLoss) Forward(x [][]float64, t [][]float64) []
 	return softmaxWithLoss.Loss
 }
 
-func (softmaxWithLoss *SoftmaxWithLoss) Backward(dout [][]float64) [][]float64 {
-	batchSize := len(softmaxWithLoss.T)
+func (softmaxWithLoss *SoftmaxWithLoss) Backward(dout gmat.Data) gmat.Data {
+	batchSize, _ := gmat.Shape2D(softmaxWithLoss.T)
 	submat := gmat.Sub(softmaxWithLoss.Y, softmaxWithLoss.T)
 	submat = gmat.MulE(submat, 1/float64(batchSize))
 	common.DenseCheck(submat, "softmaxwithloss backward")
 	return submat
 }
 
-func (drop *Dropout) Forward(x [][]float64) [][]float64 {
+func (drop *Dropout) Forward(x gmat.Data) gmat.Data {
 	if drop.Train {
 		n, m := gmat.Shape2D(x)
-		randomArray := gmat.MakeInit(n, m, rand.NormFloat64()*0.5+0.5-drop.Ratio)
+		init := rand.NormFloat64()*0.5+0.5-drop.Ratio
+		randomArray := gmat.MakeInit(n, m, init)
 		drop.Mask = gmat.Apply(randomArray, layer.MaskFunc)
 		return gmat.Mul(x, drop.Mask)
 	} else {
@@ -88,17 +91,17 @@ func (drop *Dropout) Forward(x [][]float64) [][]float64 {
 	}
 }
 
-func (drop *Dropout) Backward(dout [][]float64) [][]float64 {
+func (drop *Dropout) Backward(dout gmat.Data) gmat.Data {
 	return gmat.Mul(dout, drop.Mask)
 }
 
-func Accuracy(x [][]float64, t [][]float64) float64 {
+func Accuracy(x gmat.Data, t gmat.Data) float64 {
 	indexArray := gmat.ArgMaxCol(x)
 	n, _ := gmat.Shape2D(x)
 	//nt, mt := gmat.Shape2D(t)
 	accuracy := 0
 	for i := 0; i < n; i++ {
-		if t[i][indexArray[i][0]] > 0.9 {
+		if t.CPU[i][indexArray[i][0]] > 0.9 {
 			accuracy += 1
 		}
 	}
@@ -106,8 +109,8 @@ func Accuracy(x [][]float64, t [][]float64) float64 {
 }
 
 type LayerInterface interface {
-	Forward([][]float64) [][]float64
-	Backward([][]float64) [][]float64
+	Forward(gmat.Data) gmat.Data
+	Backward(gmat.Data) gmat.Data
 	sgdUpdate(*SGD)
 	momentumUpdate(*Momentum)
 }
@@ -116,14 +119,14 @@ func Layerinit() interface{} {
 	return []LayerInterface{}
 }
 
-func ForwardLayer(layer []LayerInterface, x [][]float64) [][]float64 {
+func ForwardLayer(layer []LayerInterface, x gmat.Data) gmat.Data {
 	for _, v := range layer {
 		x = v.Forward(x)
 	}
 	return x
 }
 
-func BackLayer(layer []LayerInterface, dout [][]float64) [][]float64 {
+func BackLayer(layer []LayerInterface, dout gmat.Data) gmat.Data {
 	for i := len(layer) - 1; i >= 0; i-- {
 		f := layer[i]
 		dout = f.Backward(dout)
@@ -137,33 +140,33 @@ func OneHot(x int, size int) (y []float64) {
 	return y
 }
 
-func MnistBatch(sweep **GoMNIST.Sweeper, batchSize int) ([][]float64, [][]float64, bool) {
-	outputSize := 10
-	imagenum := 784
-	image := gmat.Make(batchSize, imagenum)
-	label := gmat.Make(batchSize, outputSize)
-	present := true
-	for i := 0; i < batchSize; i++ {
-		image_tmp, label_tmp, present := (*sweep).Next()
-		labelTmpOneHot := OneHot(int(label_tmp), outputSize)
-		if !present {
-			return make([][]float64, 2), make([][]float64, 2), present
-		}
-		for o := 0; o < len(image_tmp); o++ {
-			image[i][o] = float64(image_tmp[o]) / 255
-		}
-		for o := 0; o < len(labelTmpOneHot); o++ {
-			label[i][o] = float64(labelTmpOneHot[o])
-		}
-	}
-	return image, label, present
-}
+//func MnistBatch(sweep **GoMNIST.Sweeper, batchSize int) (gmat.Data, gmat.Data, bool) {
+// 	outputSize := 10
+// 	imagenum := 784
+// 	image := gmat.Make2D(batchSize, imagenum)
+// 	label := gmat.Make2D(batchSize, outputSize)
+// 	present := true
+// 	for i := 0; i < batchSize; i++ {
+// 		image_tmp, label_tmp, present := (*sweep).Next()
+// 		labelTmpOneHot := OneHot(int(label_tmp), outputSize)
+// 		if !present {
+// 			return gmat.Data{}, gmat.Data{}, present
+// 		}
+// 		for o := 0; o < len(image_tmp); o++ {
+// 			image[i][o] = float64(image_tmp[o]) / 255
+// 		}
+// 		for o := 0; o < len(labelTmpOneHot); o++ {
+// 			label[i][o] = float64(labelTmpOneHot[o])
+// 		}
+// 	}
+// 	return image, label, present
+//}
 
-func DensePrint(x [][]float64, name string) {
+func DensePrint(x gmat.Data, name string) {
 	common.DensePrint(x, name)
 }
 
-func AvePrint(x [][]float64, name string) {
+func AvePrint(x gmat.Data, name string) {
 	common.AvePrint(x, name)
 }
 
@@ -212,9 +215,10 @@ func (drop *Dropout) momentumUpdate(m *Momentum) {
 	return
 }
 
-func momentumCalc(m *Momentum, layerParam [][]float64, layerDelta [][]float64, v *[][]float64) [][]float64 {
-	if *v == nil {
-		*v = gmat.Make(len(layerParam), len(layerParam[0]))
+func momentumCalc(m *Momentum, layerParam gmat.Data, layerDelta gmat.Data, v *gmat.Data) gmat.Data {
+	if (*v).CPU == nil {
+		r, c := gmat.Shape2D(layerParam)
+		*v = gmat.Make2D(r, c)
 	}
 	av := gmat.MulE(*v, m.MomentumRate)
 	dl := gmat.MulE(layerDelta, m.LearningRate)

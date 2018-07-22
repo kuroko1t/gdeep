@@ -1,22 +1,26 @@
+// +build debug
+
 package layer
 
 import (
 	"github.com/kuroko1t/gmat"
 )
 
+type Data data.Data
+
 type Conv struct {
-	W  [][][][]float64
-	B  [][]float64
+	W  gmat.Data
+	B  [][]float32
 	stride int
 	pad int
-	x [][][][]float64
-	col [][]float64
-	colW [][]float64
-	dw [][][][]float64
-	db [][]float64
+	x [][][][]float32
+	col [][]float32
+	colW [][]float32
+	dw [][][][]float32
+	db [][]float32
 }
 
-func (conv *Conv) Forward(x [][][][]float64) [][][][]float64 {
+func (conv *Conv) Forward(x [][][][]float32) [][][][]float32 {
 	fn, _, fh, fw := gmat.Shape4D(conv.W)
 	n, _, h, w := gmat.Shape4D(x)
 	outH := 1 + (h + 2 * conv.pad - fh) / conv.stride
@@ -34,7 +38,7 @@ func (conv *Conv) Forward(x [][][][]float64) [][][][]float64 {
 	return out4d
 }
 
-func (conv *Conv) Backward(dout [][][][]float64) [][][][]float64 {
+func (conv *Conv) Backward(dout [][][][]float32) [][][][]float32 {
 	fn, fc, fh, fw := gmat.Shape4D(conv.W)
 	dout2D := gmat.Reshape4D(gmat.Trans4D(dout, 0, 2, 3, 1),-1 , fn)
 	conv.db = gmat.SumRow(dout2D)
@@ -54,12 +58,12 @@ type Pooling struct {
 	poolW int
 	stride int
 	pad int
-	x [][][][]float64
+	x [][][][]float32
 	argMax [][]int
-	col [][]float64
+	col [][]float32
 }
 
-func (pool *Pooling) Forward(x [][][][]float64) [][][][]float64 {
+func (pool *Pooling) Forward(x [][][][]float32) [][][][]float32 {
 	n,c,h,w := gmat.Shape4D(x)
 	outH := 1 + (h - pool.poolH) / pool.stride
 	outW := 1 + (w - pool.poolW) / pool.stride
