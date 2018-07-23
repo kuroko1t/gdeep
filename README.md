@@ -3,9 +3,11 @@ deep learning library. still in production..
 
 # Install
 
+```
 go get github.com/kuroko1t/GoMNIST
 go get github.com/kuroko1t/gmat
 go get github.com/kuroko1t/gdeep
+```
 
 # Run
 
