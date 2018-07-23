@@ -1,6 +1,20 @@
 # gdeep
 deep learning library. still in production..
 
+# Install
+
+go get github.com/kuroko1t/GoMNIST
+go get github.com/kuroko1t/gmat
+go get github.com/kuroko1t/gdeep
+
+# Run
+
+* cpu
+go run example/mlpMnist.go
+
+* gpu
+comming soon...
+
 # Sample
 
 * mlp sample
@@ -74,6 +88,13 @@ func main() {
 ```
 
 ![accuracy](https://github.com/kuroko1t/gdeep/blob/master/img/accuracy.png?raw=true)
+
+# Todo
+
+* mlp with gpu
+* CNN
+* cpu calc parallelization
+* learning param save and restore
 
 # License
 
