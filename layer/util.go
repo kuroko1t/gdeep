@@ -14,7 +14,7 @@ func MaskFunc(v float64) float64 {
 	return v
 }
 
-func Softmax(a gmat.Data) gmat.Data {
+func Softmax(a gmat.Tensor) gmat.Tensor {
 	a = gmat.Apply(a, Exp)
 	sumExp := gmat.SumCol(a)
 	sumExp = gmat.Div(a, sumExp)
@@ -42,7 +42,7 @@ func crossEnrtopy(v float64) float64 {
 	return math.Log(v + delta)
 }
 
-func CrossEnrtopyError(y , t gmat.Data) gmat.Data {
+func CrossEnrtopyError(y, t gmat.Tensor) gmat.Tensor {
 	y = gmat.Apply(y, crossEnrtopy)
 	y = gmat.Mul(t, y)
 	y = gmat.MulE(gmat.SumCol(y), -1)

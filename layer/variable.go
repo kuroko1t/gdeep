@@ -5,33 +5,33 @@ import (
 )
 
 type Sigmoid struct {
-	Out gmat.Data
+	Out gmat.Tensor
 }
 
 type Dense struct {
-	W  gmat.Data
-	B  gmat.Data
-	X  gmat.Data
-	Dw gmat.Data
-	Db gmat.Data
-	Vw gmat.Data
-	Vb gmat.Data
+	W  gmat.Tensor
+	B  gmat.Tensor
+	X  gmat.Tensor
+	Dw gmat.Tensor
+	Db gmat.Tensor
+	Vw gmat.Tensor
+	Vb gmat.Tensor
 }
 
 type Dropout struct {
-	Mask  gmat.Data
+	Mask  gmat.Tensor
 	Train bool
 	Ratio float64
 }
 
 type SoftmaxWithLoss struct {
-	Loss gmat.Data
-	Y    gmat.Data
-	T    gmat.Data
+	Loss gmat.Tensor
+	Y    gmat.Tensor
+	T    gmat.Tensor
 }
 
 type Relu struct {
-	Mask gmat.Data
+	Mask gmat.Tensor
 }
 
 type SGD struct {
