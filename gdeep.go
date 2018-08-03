@@ -7,8 +7,6 @@ import (
 	"math/rand"
 )
 
-//type Tensor data.Tensor
-
 type Relu layer.Relu
 type Sigmoid layer.Sigmoid
 type Dense layer.Dense
