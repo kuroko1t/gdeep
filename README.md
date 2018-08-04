@@ -106,7 +106,7 @@ func main() {
 
 * Mnist Test Accuracy
 
-![accuracy]()
+![accuracy](https://raw.githubusercontent.com/kuroko1t/gdeep/master/img/accuracy.png)
 
 # Todo
 
