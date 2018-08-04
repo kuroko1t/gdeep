@@ -61,6 +61,7 @@ func main() {
 	dropout2 := &gdeep.Dropout{Train: true, Ratio: 0.2}
 	dense3 := &gdeep.Dense{W: w2, B: b2}
 	softmaxWithLoss := &gdeep.SoftmaxWithLoss{}
+
 	layer = append(layer, dense1, relu1)
 	layer = append(layer, dropout1)
 	layer = append(layer, dense2, relu2)
