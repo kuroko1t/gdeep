@@ -84,22 +84,6 @@ func main() {
 		gdeep.AvePrint(loss, "loss")
 		iter++
 	}
-
-	// test accuracy
-	accuracy := 0.0
-	iterBach := testDataSize / batchSize
-	dropout1.Train = false
-	dropout2.Train = false
-	for i := 0; i < iterBach; i++ {
-		imageBatch := test.ImagesFloatNorm[:][i*batchSize : (i+1)*batchSize]
-		lagelBatch := test.LabelsOneHot[:][i*batchSize : (i+1)*batchSize]
-		x := gmat.Make2DInitArray(imageBatch)
-		t := gmat.Make2DInitArray(lagelBatch)
-		x = gdeep.ForwardLayer(layer, x, t)
-		accuracy += gdeep.Accuracy(x, t)
-	}
-	accuracy = accuracy / float64(iterBach)
-	fmt.Println("test accuracy:", accuracy)
 }
 
 ```
