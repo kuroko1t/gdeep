@@ -1,6 +1,21 @@
+// Copyright 2018 kurosawa. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// =============================================================================
 package gdeep
 
 import (
+	"fmt"
 	"github.com/kuroko1t/gdeep/common"
 	"github.com/kuroko1t/gdeep/layer"
 	"github.com/kuroko1t/gmat"
@@ -45,7 +60,8 @@ func (dense *Dense) Forward(x gmat.Tensor, t gmat.Tensor) gmat.Tensor {
 	common.DenseCheck(x, "dense forward input")
 	dense.X = x
 	c := gmat.Dot(x, dense.W)
-	c = gmat.Add(c, dense.B)
+	castB := gmat.Cast(dense.B, len(c.CPU))
+	c = gmat.Add(c, castB)
 	common.DenseCheck(c, "dense forward output")
 	return c
 }
@@ -174,6 +190,7 @@ func MomentumUpdateLayer(layer []LayerInterface, m *Momentum) {
 }
 
 func (dense *Dense) sgdUpdate(sgd *SGD) {
+	fmt.Println(dense.Db)
 	dense.W = gmat.Sub(dense.W, gmat.MulE(dense.Dw, sgd.LearningRate))
 	dense.B = gmat.Sub(dense.B, gmat.MulE(dense.Db, sgd.LearningRate))
 	return

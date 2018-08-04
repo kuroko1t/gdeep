@@ -45,12 +45,12 @@ func main() {
 	epochNum := 1
 	iterationNum := trainDataSize * epochNum / batchSize
 
-	w0 := gmat.HeNorm2D(inputSize, hiddenSize)
+	w0 := gmat.HeNorm2D(1, hiddenSize)
 	b0 := gmat.Make2D(batchSize, hiddenSize)
 	w1 := gmat.HeNorm2D(hiddenSize, hiddenSize)
-	b1 := gmat.Make2D(batchSize, hiddenSize)
+	b1 := gmat.Make2D(1, hiddenSize)
 	w2 := gmat.HeNorm2D(hiddenSize, outputSize)
-	b2 := gmat.Make2D(batchSize, outputSize)
+	b2 := gmat.Make2D(1, outputSize)
 
 	layer := []gdeep.LayerInterface{}
 	dense1 := &gdeep.Dense{W: w0, B: b0}

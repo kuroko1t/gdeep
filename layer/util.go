@@ -1,3 +1,17 @@
+// Copyright 2018 kurosawa. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// =============================================================================
 package layer
 
 import (
@@ -16,8 +30,10 @@ func MaskFunc(v float64) float64 {
 
 func Softmax(a gmat.Tensor) gmat.Tensor {
 	a = gmat.Apply(a, Exp)
+	n := len(a.CPU[0])
 	sumExp := gmat.SumCol(a)
-	sumExp = gmat.Div(a, sumExp)
+	sumExpCast := gmat.Cast(sumExp, n)
+	sumExp = gmat.Div(a, sumExpCast)
 	return sumExp
 }
 
@@ -45,6 +61,6 @@ func crossEnrtopy(v float64) float64 {
 func CrossEnrtopyError(y, t gmat.Tensor) gmat.Tensor {
 	y = gmat.Apply(y, crossEnrtopy)
 	y = gmat.Mul(t, y)
-	y = gmat.MulE(gmat.SumCol(y), -1)
-	return y
+	crossError := gmat.MulE(gmat.SumCol(y), -1)
+	return crossError
 }
