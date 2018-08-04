@@ -15,7 +15,7 @@ type SoftmaxWithLoss layer.SoftmaxWithLoss
 type SGD layer.SGD
 type Momentum layer.Momentum
 
-func (relu *Relu) Forward(x gmat.Tensor) gmat.Tensor {
+func (relu *Relu) Forward(x gmat.Tensor, t gmat.Tensor) gmat.Tensor {
 	relu.Mask = gmat.Apply(x, layer.MaskFunc)
 	x = gmat.Mul(x, relu.Mask)
 	common.DenseCheck(x, "Relu forward output")
@@ -28,7 +28,7 @@ func (relu *Relu) Backward(dout gmat.Tensor) gmat.Tensor {
 	return dout
 }
 
-func (sigmoid *Sigmoid) Forward(x gmat.Tensor) gmat.Tensor {
+func (sigmoid *Sigmoid) Forward(x gmat.Tensor, t gmat.Tensor) gmat.Tensor {
 	x = gmat.Apply(x, layer.Sigmoid_f)
 	sigmoid.Out = x
 	return x
@@ -41,7 +41,7 @@ func (sigmoid *Sigmoid) Backward(dout gmat.Tensor) gmat.Tensor {
 	return dx
 }
 
-func (dense *Dense) Forward(x gmat.Tensor) gmat.Tensor {
+func (dense *Dense) Forward(x gmat.Tensor, t gmat.Tensor) gmat.Tensor {
 	common.DenseCheck(x, "dense forward input")
 	dense.X = x
 	c := gmat.Dot(x, dense.W)
@@ -76,7 +76,7 @@ func (softmaxWithLoss *SoftmaxWithLoss) Backward(dout gmat.Tensor) gmat.Tensor {
 	return submat
 }
 
-func (drop *Dropout) Forward(x gmat.Tensor) gmat.Tensor {
+func (drop *Dropout) Forward(x gmat.Tensor, t gmat.Tensor) gmat.Tensor {
 	if drop.Train {
 		n, m := gmat.Shape2D(x)
 		init := rand.NormFloat64()*0.5 + 0.5 - drop.Ratio
@@ -106,7 +106,7 @@ func Accuracy(x gmat.Tensor, t gmat.Tensor) float64 {
 }
 
 type LayerInterface interface {
-	Forward(gmat.Tensor) gmat.Tensor
+	Forward(gmat.Tensor, gmat.Tensor) gmat.Tensor
 	Backward(gmat.Tensor) gmat.Tensor
 	sgdUpdate(*SGD)
 	momentumUpdate(*Momentum)
@@ -116,9 +116,9 @@ func Layerinit() interface{} {
 	return []LayerInterface{}
 }
 
-func ForwardLayer(layer []LayerInterface, x gmat.Tensor) gmat.Tensor {
-	for _, v := range layer {
-		x = v.Forward(x)
+func ForwardLayer(layer []LayerInterface, x gmat.Tensor, t gmat.Tensor) gmat.Tensor {
+	for i := 0; i < len(layer)-1; i++ {
+		x = layer[i].Forward(x, t)
 	}
 	return x
 }
@@ -129,6 +129,18 @@ func BackLayer(layer []LayerInterface, dout gmat.Tensor) gmat.Tensor {
 		dout = f.Backward(dout)
 	}
 	return dout
+}
+
+func Run(layer []LayerInterface, x gmat.Tensor, t gmat.Tensor) (loss gmat.Tensor) {
+	for _, v := range layer {
+		x = v.Forward(x, t)
+	}
+	loss = x
+	batchSize := len(x.CPU)
+	outputSize := len(x.CPU[0])
+	xback := gmat.MakeInit(batchSize, outputSize, 1.0)
+	xback = BackLayer(layer, xback)
+	return loss
 }
 
 func OneHot(x int, size int) (y []float64) {
@@ -175,6 +187,10 @@ func (drop *Dropout) sgdUpdate(sgd *SGD) {
 	return
 }
 
+func (softmaxWithLoss *SoftmaxWithLoss) sgdUpdate(sgd *SGD) {
+	return
+}
+
 func (dense *Dense) momentumUpdate(m *Momentum) {
 	dense.W = momentumCalc(m, dense.W, dense.Dw, &dense.Vw)
 	dense.B = momentumCalc(m, dense.B, dense.Db, &dense.Vb)
@@ -187,6 +203,10 @@ func (relu *Relu) momentumUpdate(m *Momentum) {
 }
 
 func (drop *Dropout) momentumUpdate(m *Momentum) {
+	return
+}
+
+func (softmaxWithLoss *SoftmaxWithLoss) momentumUpdate(m *Momentum) {
 	return
 }
 

@@ -36,12 +36,13 @@ func main() {
 	relu2 := &gdeep.Relu{}
 	dropout2 := &gdeep.Dropout{Train: true, Ratio: 0.2}
 	dense3 := &gdeep.Dense{W: w2, B: b2}
-	softmaxWithLoss := gdeep.SoftmaxWithLoss{}
+	softmaxWithLoss := &gdeep.SoftmaxWithLoss{}
 	layer = append(layer, dense1, relu1)
 	layer = append(layer, dropout1)
 	layer = append(layer, dense2, relu2)
 	layer = append(layer, dropout2)
 	layer = append(layer, dense3)
+	layer = append(layer, softmaxWithLoss)
 	//sgd := &gdeep.SGD{learningRate}
 	momentum := &gdeep.Momentum{learningRate, 0.9}
 
@@ -54,17 +55,11 @@ func main() {
 		lagelBatch := train.LabelsOneHot[:][iter*batchSize : (iter+1)*batchSize]
 		x := gmat.Make2DInitArray(imageBatch)
 		t := gmat.Make2DInitArray(lagelBatch)
+		loss := gdeep.Run(layer, x, t)
 		//if i == 99 {
 		// 	gdeep.Saver(layer,"./sample.gob")
 		//}
-		x = gdeep.ForwardLayer(layer, x)
-		loss := softmaxWithLoss.Forward(x, t)
-		dout := gmat.MakeInit(batchSize, outputSize, 1.0)
-		dout = softmaxWithLoss.Backward(dout)
-		dout = gdeep.BackLayer(layer, dout)
-		//gdeep.SGDUpdateLayer(layer, sgd)
 		gdeep.MomentumUpdateLayer(layer, momentum)
-		fmt.Println("[iteration:", i, "]")
 		gdeep.AvePrint(loss, "loss")
 		iter++
 	}
@@ -79,7 +74,7 @@ func main() {
 		lagelBatch := test.LabelsOneHot[:][i*batchSize : (i+1)*batchSize]
 		x := gmat.Make2DInitArray(imageBatch)
 		t := gmat.Make2DInitArray(lagelBatch)
-		x = gdeep.ForwardLayer(layer, x)
+		x = gdeep.ForwardLayer(layer, x, t)
 		accuracy += gdeep.Accuracy(x, t)
 	}
 	accuracy = accuracy / float64(iterBach)
