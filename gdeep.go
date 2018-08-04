@@ -15,7 +15,6 @@
 package gdeep
 
 import (
-	"fmt"
 	"github.com/kuroko1t/gdeep/common"
 	"github.com/kuroko1t/gdeep/layer"
 	"github.com/kuroko1t/gmat"
@@ -190,7 +189,6 @@ func MomentumUpdateLayer(layer []LayerInterface, m *Momentum) {
 }
 
 func (dense *Dense) sgdUpdate(sgd *SGD) {
-	fmt.Println(dense.Db)
 	dense.W = gmat.Sub(dense.W, gmat.MulE(dense.Dw, sgd.LearningRate))
 	dense.B = gmat.Sub(dense.B, gmat.MulE(dense.Db, sgd.LearningRate))
 	return
