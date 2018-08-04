@@ -46,7 +46,7 @@ func main() {
 	iterationNum := trainDataSize * epochNum / batchSize
 
 	w0 := gmat.HeNorm2D(1, hiddenSize)
-	b0 := gmat.Make2D(batchSize, hiddenSize)
+	b0 := gmat.Make2D(1, hiddenSize)
 	w1 := gmat.HeNorm2D(hiddenSize, hiddenSize)
 	b1 := gmat.Make2D(1, hiddenSize)
 	w2 := gmat.HeNorm2D(hiddenSize, outputSize)
