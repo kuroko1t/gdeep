@@ -93,9 +93,9 @@ func (softmaxWithLoss *SoftmaxWithLoss) Backward(dout gmat.Tensor) gmat.Tensor {
 
 func (drop *Dropout) Forward(x gmat.Tensor, t gmat.Tensor) gmat.Tensor {
 	if drop.Train {
-		n, m := gmat.Shape2D(x)
-		init := rand.NormFloat64()*0.5 + 0.5 - drop.Ratio
-		randomArray := gmat.MakeInit(n, m, init)
+		m, n := gmat.Shape2D(x)
+		init := rand.NormFloat64()*0.1666 + 0.5 - drop.Ratio
+		randomArray := gmat.MakeInit(m, n, init)
 		drop.Mask = gmat.Apply(randomArray, layer.MaskFunc)
 		return gmat.Mul(x, drop.Mask)
 	} else {
