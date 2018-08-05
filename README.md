@@ -15,6 +15,24 @@ go get github.com/kuroko1t/gdeep
 
 go run example/mlpMnist.go
 
+# implemented networks
+only support 2D input
+
+### layer
+* Dense
+* Dropout
+
+### activation
+* Relu
+* Sigmoid
+
+### loss
+* SoftmaxWithLoss
+
+### optimization
+* Sgd
+* Momentum
+
 # Sample
 
 * mlp sample
