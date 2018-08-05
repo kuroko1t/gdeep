@@ -45,29 +45,19 @@ func main() {
 	epochNum := 1
 	iterationNum := trainDataSize * epochNum / batchSize
 
-	w0 := gmat.HeNorm2D(inputSize, hiddenSize)
-	b0 := gmat.Make2D(1, hiddenSize)
-	w1 := gmat.HeNorm2D(hiddenSize, hiddenSize)
-	b1 := gmat.Make2D(1, hiddenSize)
-	w2 := gmat.HeNorm2D(hiddenSize, outputSize)
-	b2 := gmat.Make2D(1, outputSize)
+	dropout1 := &gdeep.Dropout{}
+	dropout2 := &gdeep.Dropout{}
 
 	layer := []gdeep.LayerInterface{}
-	dense1 := &gdeep.Dense{W: w0, B: b0}
-	relu1 := &gdeep.Relu{}
-	dropout1 := &gdeep.Dropout{Train: true, Ratio: 0.2}
-	dense2 := &gdeep.Dense{W: w1, B: b1}
-	relu2 := &gdeep.Relu{}
-	dropout2 := &gdeep.Dropout{Train: true, Ratio: 0.2}
-	dense3 := &gdeep.Dense{W: w2, B: b2}
-	softmaxWithLoss := &gdeep.SoftmaxWithLoss{}
-
-	layer = append(layer, dense1, relu1)
-	layer = append(layer, dropout1)
-	layer = append(layer, dense2, relu2)
-	layer = append(layer, dropout2)
-	layer = append(layer, dense3)
-	layer = append(layer, softmaxWithLoss)
+	gdeep.LayerAdd(&layer, &gdeep.Dense{}, []int{inputSize, hiddenSize})
+	gdeep.LayerAdd(&layer, &gdeep.Relu{})
+	gdeep.LayerAdd(&layer, &gdeep.Relu{})
+	gdeep.LayerAdd(&layer, dropout1, 0.2)
+	gdeep.LayerAdd(&layer, &gdeep.Dense{}, []int{hiddenSize, hiddenSize})
+	gdeep.LayerAdd(&layer, &gdeep.Relu{})
+	gdeep.LayerAdd(&layer, dropout2, 0.2)
+	gdeep.LayerAdd(&layer, &gdeep.Dense{}, []int{hiddenSize, outputSize})
+	gdeep.LayerAdd(&layer, &gdeep.SoftmaxWithLoss{})
 	momentum := &gdeep.Momentum{learningRate, 0.9}
 
 	iter := 0
@@ -75,7 +65,7 @@ func main() {
 		if (i+2)*batchSize > trainDataSize {
 			iter = 0
 		}
-		imageBatch := train.ImagesFloatNorm[:][iter*batchSize : (iter+1)*batchSize
+		imageBatch := train.ImagesFloatNorm[:][iter*batchSize : (iter+1)*batchSize]
 		lagelBatch := train.LabelsOneHot[:][iter*batchSize : (iter+1)*batchSize]
 		x := gmat.Make2DInitArray(imageBatch)
 		t := gmat.Make2DInitArray(lagelBatch)

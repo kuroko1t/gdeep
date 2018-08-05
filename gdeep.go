@@ -18,6 +18,7 @@ import (
 	"github.com/kuroko1t/gdeep/common"
 	"github.com/kuroko1t/gdeep/layer"
 	"github.com/kuroko1t/gmat"
+	"log"
 	"math/rand"
 )
 
@@ -170,6 +171,38 @@ func DensePrint(x gmat.Tensor, name string) {
 
 func AvePrint(x gmat.Tensor, name string) {
 	common.AvePrint(x, name)
+}
+
+///func LayerAdd(layer []LayerInterface, calc interface{}, shape []int) {
+/// 	w := gmat.HeNorm2D(shape[0], shape[1])
+/// 	b := gmat.Make2D(shape[1])
+/// 	calc.W = w
+/// 	calc.B = b
+/// 	layer = append(layer, calc)
+///}
+func LayerAdd(layer *[]LayerInterface, calc interface{}, shape ...interface{}) {
+	switch value := calc.(type) {
+	case *Dense:
+		if shapeVal, ok := shape[0].([]int); ok {
+			w := gmat.HeNorm2D(int(shapeVal[0]), int(shapeVal[1]))
+			b := gmat.Make2D(1, int(shapeVal[1]))
+			value.W = w
+			value.B = b
+			*layer = append(*layer, value)
+		} else {
+			log.Fatal("invalid Dense parameter type.")
+		}
+	case *Relu:
+		*layer = append(*layer, value)
+	case *SoftmaxWithLoss:
+		*layer = append(*layer, value)
+	case *Dropout:
+		if shapeVal, ok := shape[0].(float64); ok {
+			value.Train = true
+			value.Ratio = shapeVal
+			*layer = append(*layer, value)
+		}
+	}
 }
 
 // update
