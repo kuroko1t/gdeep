@@ -51,7 +51,6 @@ func main() {
 	layer := []gdeep.LayerInterface{}
 	gdeep.LayerAdd(&layer, &gdeep.Dense{}, []int{inputSize, hiddenSize})
 	gdeep.LayerAdd(&layer, &gdeep.Relu{})
-	gdeep.LayerAdd(&layer, &gdeep.Relu{})
 	gdeep.LayerAdd(&layer, dropout1, 0.2)
 	gdeep.LayerAdd(&layer, &gdeep.Dense{}, []int{hiddenSize, hiddenSize})
 	gdeep.LayerAdd(&layer, &gdeep.Relu{})
