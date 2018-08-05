@@ -12,10 +12,8 @@ go get github.com/kuroko1t/gdeep
 # Run
 
 * cpu
-go run example/mlpMnist.go
 
-* gpu
-comming soon...
+go run example/mlpMnist.go
 
 # Sample
 

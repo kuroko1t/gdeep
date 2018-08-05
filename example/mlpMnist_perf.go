@@ -24,7 +24,7 @@ func main() {
 
 	batchSize := 128
 	inputSize := 784
-	hiddenSize := 512
+	hiddenSize := 20
 	outputSize := 10
 	learningRate := 0.01
 	epochNum := 1
@@ -32,7 +32,6 @@ func main() {
 
 	dropout1 := &gdeep.Dropout{}
 	dropout2 := &gdeep.Dropout{}
-
 	layer := []gdeep.LayerInterface{}
 	gdeep.LayerAdd(&layer, &gdeep.Dense{}, []int{inputSize, hiddenSize})
 	gdeep.LayerAdd(&layer, &gdeep.Relu{})
@@ -63,6 +62,7 @@ func main() {
 	}
 
 	// test accuracy
+	batchSize = 256
 	accuracy := 0.0
 	iterBach := testDataSize / batchSize
 	dropout1.Train = false

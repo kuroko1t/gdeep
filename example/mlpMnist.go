@@ -45,16 +45,15 @@ func main() {
 		x := gmat.Make2DInitArray(imageBatch)
 		t := gmat.Make2DInitArray(lagelBatch)
 		loss := gdeep.Run(layer, x, t)
-		//if i == 99 {
-		// 	gdeep.Saver(layer,"./sample.gob")
-		//}
 		gdeep.MomentumUpdateLayer(layer, momentum)
 		gdeep.AvePrint(loss, "loss")
 		iter++
 	}
+	// save model
+	//gdeep.Saver(layer, "./sample.gob")
 
-	// test accuracy
 	accuracy := 0.0
+	batchSize = 256
 	iterBach := testDataSize / batchSize
 	dropout1.Train = false
 	dropout2.Train = false

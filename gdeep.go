@@ -173,13 +173,6 @@ func AvePrint(x gmat.Tensor, name string) {
 	common.AvePrint(x, name)
 }
 
-///func LayerAdd(layer []LayerInterface, calc interface{}, shape []int) {
-/// 	w := gmat.HeNorm2D(shape[0], shape[1])
-/// 	b := gmat.Make2D(shape[1])
-/// 	calc.W = w
-/// 	calc.B = b
-/// 	layer = append(layer, calc)
-///}
 func LayerAdd(layer *[]LayerInterface, calc interface{}, shape ...interface{}) {
 	switch value := calc.(type) {
 	case *Dense:

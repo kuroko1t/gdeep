@@ -18,7 +18,7 @@ import (
 	"encoding/gob"
 	"log"
 	"os"
-	//"fmt"
+	"reflect"
 )
 
 func Saver(p []LayerInterface, saveName string) {
@@ -36,14 +36,24 @@ func Saver(p []LayerInterface, saveName string) {
 	}
 }
 
-func Restore(fileName string, p interface{}) {
+func Restore(fileName string, p *[]LayerInterface) {
 	f, err := os.Open(fileName)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer f.Close()
 	dec := gob.NewDecoder(f)
-	if err := dec.Decode(&p); err != nil {
+	gob.Register(&Dense{})
+	gob.Register(&Relu{})
+	gob.Register(&Dropout{})
+	gob.Register(&SoftmaxWithLoss{})
+	if err := dec.Decode(p); err != nil {
 		log.Fatal("decode error:", err)
+	}
+	for i := 0; i < len(*p); i++ {
+		if reflect.TypeOf(&Dropout{}) == reflect.TypeOf((*p)[i]) {
+			dropout := (*p)[i].(*Dropout)
+			dropout.Train = false
+		}
 	}
 }
