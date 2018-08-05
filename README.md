@@ -16,7 +16,7 @@ go get github.com/kuroko1t/gdeep
 go run example/mlpMnist.go
 
 # implemented networks
-only support 2D input
+only support 2D input yet
 
 ### layer
 * Dense
