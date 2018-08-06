@@ -262,3 +262,17 @@ func momentumCalc(m *Momentum, layerParam gmat.Tensor, layerDelta gmat.Tensor, v
 	layerParam = gmat.Add(layerParam, *v)
 	return layerParam
 }
+
+func Predict(layers []LayerInterface, x gmat.Tensor) int {
+	x = ForwardLayer(layers, x, x)
+	x = layer.Softmax(x)
+	max := -100.0
+	maxindex := 0
+	for i := 0; i < len(x.CPU[0]); i++ {
+		if x.CPU[0][i] > max {
+			max = x.CPU[0][i]
+			maxindex = i
+		}
+	}
+	return maxindex
+}
