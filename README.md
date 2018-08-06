@@ -27,7 +27,7 @@ only support 2D input yet
 * Sigmoid
 
 ### loss
-* SoftmaxWithLoss
+* crossentropy
 
 ### optimization
 * Sgd
