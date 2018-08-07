@@ -97,12 +97,15 @@ func main() {
 
 ![accuracy](https://raw.githubusercontent.com/kuroko1t/gdeep/master/img/accuracy.png)
 
+# Done
+
+* cpu calc parallelization(dot)
+* learning param save and restore
+
 # Todo
 
 * mlp with gpu
 * CNN
-* cpu calc parallelization
-* learning param save and restore
 
 # License
 
