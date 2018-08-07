@@ -42,7 +42,7 @@ func ImageRead2GrayNorm(imgpath string) []float64 {
 		for i := 0; i < maxX; i++ {
 			c := color.GrayModel.Convert(img.At(i, j))
 			gray, _ := c.(color.Gray)
-			imgfloat[i+j*maxX] = float64(gray.Y) / 255.0
+			imgfloat[i+j*maxX] = (255.0 - float64(gray.Y)) / 255.0
 		}
 	}
 	return imgfloat
