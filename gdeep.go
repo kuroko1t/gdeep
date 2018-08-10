@@ -147,7 +147,7 @@ func BackLayer(layer []LayerInterface, dout gmat.Tensor) gmat.Tensor {
 	return dout
 }
 
-func Run(layer []LayerInterface, x gmat.Tensor, t gmat.Tensor) (loss gmat.Tensor) {
+func Run(layer []LayerInterface, update interface{}, x gmat.Tensor, t gmat.Tensor) (loss gmat.Tensor) {
 	for _, v := range layer {
 		x = v.Forward(x, t)
 	}
@@ -156,6 +156,12 @@ func Run(layer []LayerInterface, x gmat.Tensor, t gmat.Tensor) (loss gmat.Tensor
 	outputSize := len(x.CPU[0])
 	xback := gmat.MakeInit(batchSize, outputSize, 1.0)
 	xback = BackLayer(layer, xback)
+	switch value := update.(type) {
+	case *Momentum:
+		MomentumUpdateLayer(layer, value)
+	case *SGD:
+		SGDUpdateLayer(layer, value)
+	}
 	return loss
 }
 

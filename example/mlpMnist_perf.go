@@ -52,11 +52,7 @@ func main() {
 		lagelBatch := train.LabelsOneHot[:][iter*batchSize : (iter+1)*batchSize]
 		x := gmat.Make2DInitArray(imageBatch)
 		t := gmat.Make2DInitArray(lagelBatch)
-		loss := gdeep.Run(layer, x, t)
-		//if i == 99 {
-		// 	gdeep.Saver(layer,"./sample.gob")
-		//}
-		gdeep.MomentumUpdateLayer(layer, momentum)
+		loss := gdeep.Run(layer, momentum, x, t)
 		gdeep.AvePrint(loss, "loss")
 		iter++
 	}
