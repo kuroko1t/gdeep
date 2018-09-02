@@ -157,6 +157,7 @@ func Run(layer []LayerInterface, update interface{}, x gmat.Tensor, t gmat.Tenso
 	outputSize := len(x.CPU[0])
 	xback := gmat.MakeInit(batchSize, outputSize, 1.0)
 	xback = BackLayer(layer, xback)
+	Allreduce(layer)
 	switch value := update.(type) {
 	case *Momentum:
 		MomentumUpdateLayer(layer, value)
