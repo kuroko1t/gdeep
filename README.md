@@ -15,6 +15,10 @@ go get github.com/kuroko1t/gdeep
 
 go run example/mlpMnist.go
 
+* distributed
+
+mpirun -np 2 -H host1:1,host2:1 go run example/mlpMnist.go
+
 # implemented networks
 only support 2D input yet
 
@@ -91,6 +95,9 @@ func main() {
 }
 
 ```
+
+* distributed
+[distributed](https://raw.githubusercontent.com/kuroko1t/gdeep/master/example/mlpMnist_allreduce.go)
 
 * Mnist Test Accuracy
 
