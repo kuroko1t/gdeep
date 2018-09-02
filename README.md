@@ -98,7 +98,7 @@ func main() {
 
 * distributed
 
-[sample](https://raw.githubusercontent.com/kuroko1t/gdeep/master/example/mlpMnist_allreduce.go)
+[sample](https://github.com/kuroko1t/gdeep/blob/master/example/mlpMnist_allreduce.go)
 
 * Mnist Test Accuracy
 
