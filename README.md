@@ -17,7 +17,7 @@ go run example/mlpMnist.go
 
 * distributed
 
-mpirun -np 2 -H host1:1,host2:1 go run example/mlpMnist.go
+mpirun -np 2 -H host1:1,host2:1 go run example/mlpMnist_allreduce.go
 
 # implemented networks
 only support 2D input yet
