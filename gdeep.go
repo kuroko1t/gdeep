@@ -126,6 +126,7 @@ type LayerInterface interface {
 	Backward(gmat.Tensor) gmat.Tensor
 	sgdUpdate(*SGD)
 	momentumUpdate(*Momentum)
+	allreduce()
 }
 
 func Layerinit() interface{} {
@@ -164,6 +165,12 @@ func Run(layer []LayerInterface, update interface{}, x gmat.Tensor, t gmat.Tenso
 	}
 	return loss
 }
+
+//func Allreduce(layer []LayerInterface) {
+// 	for _, v := range layer {
+// 		v.allreduce()
+// 	}
+//}
 
 func OneHot(x int, size int) (y []float64) {
 	y = make([]float64, size)
