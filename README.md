@@ -9,6 +9,11 @@ go get github.com/kuroko1t/gmat
 go get github.com/kuroko1t/gdeep
 ```
 
+## distributed
+
+go get github.com/kuroko1t/gmpi
+install openmpi > 3.0
+
 # Run
 
 * cpu
