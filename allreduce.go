@@ -28,19 +28,24 @@ func Comm_size() int {
 	return size
 }
 
-func (dense *Dense) allreduce()  {
-	n, c := gmat.Shape2D(dense.Dw)
-	denseW1D := gmat.Reshape2D1D(dense.Dw)
+func performReduce(x gmat.Tensor) gmat.Tensor {
+	n, c := gmat.Shape2D(x)
+	x1D := gmat.Reshape2D1D(x)
 	allreduceSum := make([]float64, n*c)
 	mpi.Barrier(mpi.COMM_WORLD)
-	mpi.Allreduce(&denseW1D[0], &allreduceSum[0], n*c,
+	mpi.Allreduce(&x1D[0], &allreduceSum[0], n*c,
 		mpi.Float64, mpi.SUM, mpi.COMM_WORLD)
 	commsize := mpi.Comm_size(mpi.COMM_WORLD)
 	allreduceValue := make([]float64, n*c)
 	for i := range allreduceSum {
 		allreduceValue[i] = allreduceSum[i] / float64(commsize)
 	}
-	dense.Dw = gmat.Reshape1D2D(allreduceValue, n, c)
+	return gmat.Reshape1D2D(allreduceValue, n, c)
+}
+
+func (dense *Dense) allreduce()  {
+	dense.Dw = performReduce(dense.Dw)
+	dense.Db = performReduce(dense.Db)
 	return
 }
 
