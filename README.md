@@ -11,8 +11,8 @@ go get github.com/kuroko1t/gdeep
 
 ## distributed
 
-go get github.com/kuroko1t/gmpi
-install openmpi > 3.0
+* go get github.com/kuroko1t/gmpi
+* install openmpi > 3.0
 
 # Run
 
