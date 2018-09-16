@@ -1,4 +1,5 @@
 // +build mpi
+
 package gdeep
 
 import (
