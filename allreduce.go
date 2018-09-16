@@ -1,7 +1,7 @@
+// +build mpi
 package gdeep
 
 import (
-	//"fmt"
 	"github.com/kuroko1t/gmpi"
 	"github.com/kuroko1t/gmat"
 	"C"
