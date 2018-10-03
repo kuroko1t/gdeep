@@ -3,7 +3,7 @@
 package gdeep
 
 import (
-	"github.com/kuroko1t/gmpi"
+	//"github.com/kuroko1t/gmpi"
 	"github.com/kuroko1t/gmat"
 	"C"
 )

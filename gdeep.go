@@ -30,6 +30,14 @@ type SoftmaxWithLoss layer.SoftmaxWithLoss
 type SGD layer.SGD
 type Momentum layer.Momentum
 
+type LayerInterface interface {
+	Forward(gmat.Tensor, gmat.Tensor) gmat.Tensor
+	Backward(gmat.Tensor) gmat.Tensor
+	sgdUpdate(*SGD)
+	momentumUpdate(*Momentum)
+	allreduce()
+}
+
 func (relu *Relu) Forward(x gmat.Tensor, t gmat.Tensor) gmat.Tensor {
 	relu.Mask = gmat.Apply(x, layer.MaskFunc)
 	x = gmat.Mul(x, relu.Mask)
@@ -121,14 +129,6 @@ func Accuracy(x gmat.Tensor, t gmat.Tensor) float64 {
 	return float64(accuracy) / float64(n)
 }
 
-type LayerInterface interface {
-	Forward(gmat.Tensor, gmat.Tensor) gmat.Tensor
-	Backward(gmat.Tensor) gmat.Tensor
-	sgdUpdate(*SGD)
-	momentumUpdate(*Momentum)
-	allreduce()
-}
-
 func Layerinit() interface{} {
 	return []LayerInterface{}
 }
@@ -166,12 +166,6 @@ func Run(layer []LayerInterface, update interface{}, x gmat.Tensor, t gmat.Tenso
 	}
 	return loss
 }
-
-//func Allreduce(layer []LayerInterface) {
-// 	for _, v := range layer {
-// 		v.allreduce()
-// 	}
-//}
 
 func OneHot(x int, size int) (y []float64) {
 	y = make([]float64, size)
