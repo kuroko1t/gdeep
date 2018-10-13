@@ -1,3 +1,5 @@
+// +build gpu
+
 // Copyright 2018 kurosawa. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,38 +21,13 @@ import (
 	"math"
 )
 
-func MaskFunc(v float64) float64 {
-	if v <= 0 {
-		v = 0
-	} else {
-		v = 1
-	}
-	return v
-}
-
 func Softmax(a gmat.Tensor) gmat.Tensor {
-	a = gmat.Apply(a, Exp)
+	a = gmat.Exp(a, 0.0, 0.0)
 	n := len(a.CPU[0])
 	sumExp := gmat.SumCol(a)
 	sumExpCast := gmat.Cast(sumExp, n)
 	sumExp = gmat.Div(a, sumExpCast)
 	return sumExp
-}
-
-func Sigmoid_f(v float64) float64 {
-	return 1 / (1 + math.Exp(-v))
-}
-
-func Sigmoid_b(v float64) float64 {
-	return 1 - v
-}
-
-func Add1(v float64) float64 {
-	return v + 1
-}
-
-func Exp(v float64) float64 {
-	return float64(math.Exp(float64(v)))
 }
 
 func crossEnrtopy(v float64) float64 {
@@ -59,7 +36,8 @@ func crossEnrtopy(v float64) float64 {
 }
 
 func CrossEnrtopyError(y, t gmat.Tensor) gmat.Tensor {
-	y = gmat.Apply(y, crossEnrtopy)
+	delta := 0.000001
+	y = gmat.Log(y, delta)
 	y = gmat.Mul(t, y)
 	crossError := gmat.MulE(gmat.SumCol(y), -1)
 	return crossError
