@@ -22,7 +22,7 @@ import (
 
 func Softmax(a gmat.Tensor) gmat.Tensor {
 	a = gmat.Exp(a, 0.0, 0.0)
-	n := len(a.CPU[0])
+	n := a.Shape[0]
 	sumExp := gmat.SumCol(a)
 	sumExpCast := gmat.Cast(sumExp, n)
 	sumExp = gmat.Div(a, sumExpCast)

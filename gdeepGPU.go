@@ -157,8 +157,8 @@ func Run(layer []LayerInterface, update interface{}, x gmat.Tensor, t gmat.Tenso
 		x = v.Forward(x, t)
 	}
 	loss = x
-	batchSize := len(x.CPU)
-	outputSize := len(x.CPU[0])
+	batchSize := x.Shape[0]
+	outputSize := x.Shape[1]
 	xback := gmat.MakeInit(batchSize, outputSize, 1.0)
 	xback = BackLayer(layer, xback)
 	Allreduce(layer)
