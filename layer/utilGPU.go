@@ -18,7 +18,6 @@ package layer
 
 import (
 	"github.com/kuroko1t/gmat"
-	"math"
 )
 
 func Softmax(a gmat.Tensor) gmat.Tensor {
@@ -30,10 +29,10 @@ func Softmax(a gmat.Tensor) gmat.Tensor {
 	return sumExp
 }
 
-func crossEnrtopy(v float64) float64 {
-	delta := 0.000001
-	return math.Log(v + delta)
-}
+//func crossEnrtopy(v float64) float64 {
+// 	delta := 0.000001
+// 	return math.Log(v + delta)
+//}
 
 func CrossEnrtopyError(y, t gmat.Tensor) gmat.Tensor {
 	delta := 0.000001

@@ -106,8 +106,8 @@ func (drop *Dropout) Forward(x gmat.Tensor, t gmat.Tensor) gmat.Tensor {
 	if drop.Train {
 		m, n := gmat.Shape2D(x)
 		//init := rand.NormFloat64()*0.1666 + 0.5 - drop.Ratio
-		init := gmat.AxpyE(gmat.RandomNorm(int{m,n}), 0.1666, 0.5 - drop.Ratio)
-		randomArray := gmat.MakeInit(m, n, init)
+		randomArray := gmat.AxpyE(gmat.RandomNorm([]int{m,n}), 0.1666, 0.5 - drop.Ratio)
+		//randomArray := gmat.MakeInit(m, n, init)
 		//drop.Mask = gmat.Apply(randomArray, layer.MaskFunc)
 		drop.Mask = gmat.Mask(randomArray)
 		return gmat.Mul(x, drop.Mask)
@@ -120,18 +120,18 @@ func (drop *Dropout) Backward(dout gmat.Tensor) gmat.Tensor {
 	return gmat.Mul(dout, drop.Mask)
 }
 
-func Accuracy(x gmat.Tensor, t gmat.Tensor) float64 {
-	indexArray := gmat.ArgMaxCol(x)
-	n, _ := gmat.Shape2D(x)
-	//nt, mt := gmat.Shape2D(t)
-	accuracy := 0
-	for i := 0; i < n; i++ {
-		if t.CPU[i][indexArray[i][0]] > 0.9 {
-			accuracy += 1
-		}
-	}
-	return float64(accuracy) / float64(n)
-}
+//func Accuracy(x gmat.Tensor, t gmat.Tensor) float64 {
+// 	indexArray := gmat.ArgMaxCol(x)
+// 	n, _ := gmat.Shape2D(x)
+// 	//nt, mt := gmat.Shape2D(t)
+// 	accuracy := 0
+// 	for i := 0; i < n; i++ {
+// 		if t.CPU[i][indexArray[i][0]] > 0.9 {
+// 			accuracy += 1
+// 		}
+// 	}
+// 	return float64(accuracy) / float64(n)
+//}
 
 func Layerinit() interface{} {
 	return []LayerInterface{}
@@ -189,7 +189,9 @@ func LayerAdd(layer *[]LayerInterface, calc interface{}, shape ...interface{}) {
 	switch value := calc.(type) {
 	case *Dense:
 		if shapeVal, ok := shape[0].([]int); ok {
-			w := gmat.HeNorm2D(int(shapeVal[0]), int(shapeVal[1]))
+			// Henorm
+			random := gmat.RandomNorm(shapeVal)
+			w := gmat.SqrtT(random, 0.0, 0.0)
 			b := gmat.Make2D(1, int(shapeVal[1]))
 			value.W = w
 			value.B = b
