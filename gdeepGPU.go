@@ -70,7 +70,7 @@ func (dense *Dense) Forward(x gmat.Tensor, t gmat.Tensor) gmat.Tensor {
 	common.DenseCheck(x, "dense forward input")
 	dense.X = x
 	c := gmat.Dot(x, dense.W)
-	castB := gmat.Cast(dense.B, len(c.CPU))
+	castB := gmat.Cast(dense.B, c.Shape[0])
 	c = gmat.Add(c, castB)
 	common.DenseCheck(c, "dense forward output")
 	return c
