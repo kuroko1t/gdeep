@@ -18,15 +18,17 @@ package layer
 
 import (
 	"github.com/kuroko1t/gmat"
+	"github.com/kuroko1t/gdeep/common"
 )
 
 func Softmax(a gmat.Tensor) gmat.Tensor {
-	a = gmat.Exp(a, 0.0, 0.0)
+	a = gmat.Exp(a, 1.0, 0.0)
 	n := a.Shape[0]
 	sumExp := gmat.SumCol(a)
 	sumExpCast := gmat.Cast(sumExp, n)
-	sumExp = gmat.Div(a, sumExpCast)
-	return sumExp
+	softmax := gmat.Div(a, sumExpCast)
+	common.DenseCheck(softmax, "softmax:softmax")
+	return softmax
 }
 
 //func crossEnrtopy(v float64) float64 {

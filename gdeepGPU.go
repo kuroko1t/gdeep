@@ -21,6 +21,7 @@ import (
 	"github.com/kuroko1t/gdeep/layer"
 	"github.com/kuroko1t/gmat"
 	"log"
+	"math"
 )
 
 type Relu layer.Relu
@@ -71,6 +72,7 @@ func (dense *Dense) Forward(x gmat.Tensor, t gmat.Tensor) gmat.Tensor {
 	dense.X = x
 	c := gmat.Dot(x, dense.W)
 	castB := gmat.Cast(dense.B, c.Shape[0])
+	common.DenseCheck(castB, "dense castB2")
 	c = gmat.Add(c, castB)
 	common.DenseCheck(c, "dense forward output")
 	return c
@@ -190,8 +192,10 @@ func LayerAdd(layer *[]LayerInterface, calc interface{}, shape ...interface{}) {
 	case *Dense:
 		if shapeVal, ok := shape[0].([]int); ok {
 			// Henorm
-			random := gmat.RandomNorm(shapeVal)
-			w := gmat.SqrtT(random, 0.0, 0.0)
+			random := gmat.AxpyE(gmat.RandomNorm(shapeVal), 1 , -0.5)
+			w := gmat.MulE(random, 1.0 / math.Sqrt(float64(random.Shape[0])))
+			//w := //gmat.SqrtT(shape[0], 0.0, 0.0)
+			common.DenseCheck(w, "w")
 			b := gmat.Make2D(1, int(shapeVal[1]))
 			value.W = w
 			value.B = b
