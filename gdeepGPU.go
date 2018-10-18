@@ -22,6 +22,7 @@ import (
 	"github.com/kuroko1t/gmat"
 	"log"
 	"math"
+	//"fmt"
 )
 
 type Relu layer.Relu
@@ -71,6 +72,7 @@ func (dense *Dense) Forward(x gmat.Tensor, t gmat.Tensor) gmat.Tensor {
 	common.DenseCheck(x, "dense forward input")
 	dense.X = x
 	c := gmat.Dot(x, dense.W)
+	common.DenseCheck(dense.B, "dense castB2")
 	castB := gmat.Cast(dense.B, c.Shape[0])
 	common.DenseCheck(castB, "dense castB2")
 	c = gmat.Add(c, castB)
@@ -89,8 +91,11 @@ func (dense *Dense) Backward(dout gmat.Tensor) gmat.Tensor {
 }
 
 func (softmaxWithLoss *SoftmaxWithLoss) Forward(x gmat.Tensor, t gmat.Tensor) gmat.Tensor {
+	common.DenseCheck(t, "softmaxWithLoss input")
 	softmaxWithLoss.T = t
 	softmaxWithLoss.Y = layer.Softmax(x)
+	common.DenseCheck(softmaxWithLoss.Y, "softmaxWithLoss.Y")
+	common.DenseCheck(softmaxWithLoss.T, "softmaxWithLoss.T")
 	softmaxWithLoss.Loss = layer.CrossEnrtopyError(softmaxWithLoss.Y, softmaxWithLoss.T)
 	common.DenseCheck(softmaxWithLoss.Loss, "softmaxwithloss forward")
 	return softmaxWithLoss.Loss
@@ -270,7 +275,7 @@ func (softmaxWithLoss *SoftmaxWithLoss) momentumUpdate(m *Momentum) {
 }
 
 func momentumCalc(m *Momentum, layerParam gmat.Tensor, layerDelta gmat.Tensor, v *gmat.Tensor) gmat.Tensor {
-	if (*v).CPU == nil {
+	if (*v).GPU == nil {
 		r, c := gmat.Shape2D(layerParam)
 		*v = gmat.Make2D(r, c)
 	}
