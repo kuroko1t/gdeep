@@ -18,11 +18,15 @@ go get github.com/kuroko1t/gdeep
 
 * cpu
 
+```
 go run example/mlpMnist.go
+```
 
 * distributed
 
+```
 mpirun -np 2 -H host1:1,host2:1 go run example/mlpMnist_allreduce.go
+```
 
 # implemented networks
 only support 2D input yet
@@ -113,10 +117,10 @@ func main() {
 
 * cpu calc parallelization(dot)
 * learning param save and restore
+* mlp with gpu
 
 # Todo
 
-* mlp with gpu
 * CNN
 
 # License

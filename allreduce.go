@@ -4,8 +4,8 @@ package gdeep
 
 import (
 	//"github.com/kuroko1t/gmpi"
-	"github.com/kuroko1t/gmat"
 	"C"
+	"github.com/kuroko1t/gmat"
 )
 
 func InitAllreduce() {
@@ -44,7 +44,7 @@ func performReduce(x gmat.Tensor) gmat.Tensor {
 	return gmat.Reshape1D2D(allreduceValue, n, c)
 }
 
-func (dense *Dense) allreduce()  {
+func (dense *Dense) allreduce() {
 	dense.Dw = performReduce(dense.Dw)
 	dense.Db = performReduce(dense.Db)
 	return

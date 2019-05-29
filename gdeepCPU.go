@@ -188,7 +188,7 @@ func LayerAdd(layer *[]LayerInterface, calc interface{}, shape ...interface{}) {
 	case *Dense:
 		if shapeVal, ok := shape[0].([]int); ok {
 			w := gmat.HeNorm2D(int(shapeVal[0]), int(shapeVal[1]))
-			b := gmat.Make2D(1, int(shapeVal[1]))
+			b := gmat.Make([]int{1, int(shapeVal[1])})
 			value.W = w
 			value.B = b
 			*layer = append(*layer, value)
@@ -264,7 +264,7 @@ func (softmaxWithLoss *SoftmaxWithLoss) momentumUpdate(m *Momentum) {
 func momentumCalc(m *Momentum, layerParam gmat.Tensor, layerDelta gmat.Tensor, v *gmat.Tensor) gmat.Tensor {
 	if (*v).CPU == nil {
 		r, c := gmat.Shape2D(layerParam)
-		*v = gmat.Make2D(r, c)
+		*v = gmat.Make([]int{r, c})
 	}
 	av := gmat.MulE(*v, m.MomentumRate)
 	dl := gmat.MulE(layerDelta, m.LearningRate)

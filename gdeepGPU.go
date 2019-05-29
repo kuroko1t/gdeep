@@ -113,7 +113,7 @@ func (drop *Dropout) Forward(x gmat.Tensor, t gmat.Tensor) gmat.Tensor {
 	if drop.Train {
 		m, n := gmat.Shape2D(x)
 		//init := rand.NormFloat64()*0.1666 + 0.5 - drop.Ratio
-		randomArray := gmat.AxpyE(gmat.RandomNorm([]int{m,n}), 0.1666, 0.5 - drop.Ratio)
+		randomArray := gmat.AxpyE(gmat.RandomNorm([]int{m, n}), 0.1666, 0.5-drop.Ratio)
 		//randomArray := gmat.MakeInit(m, n, init)
 		//drop.Mask = gmat.Apply(randomArray, layer.MaskFunc)
 		drop.Mask = gmat.Mask(randomArray)
@@ -197,8 +197,8 @@ func LayerAdd(layer *[]LayerInterface, calc interface{}, shape ...interface{}) {
 	case *Dense:
 		if shapeVal, ok := shape[0].([]int); ok {
 			// Henorm
-			random := gmat.AxpyE(gmat.RandomNorm(shapeVal), 1 , -0.5)
-			w := gmat.MulE(random, 1.0 / math.Sqrt(float64(random.Shape[0])))
+			random := gmat.AxpyE(gmat.RandomNorm(shapeVal), 1, -0.5)
+			w := gmat.MulE(random, 1.0/math.Sqrt(float64(random.Shape[0])))
 			//w := //gmat.SqrtT(shape[0], 0.0, 0.0)
 			common.DenseCheck(w, "w")
 			b := gmat.Make2D(1, int(shapeVal[1]))

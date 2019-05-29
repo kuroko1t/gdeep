@@ -38,10 +38,10 @@ func main() {
 	gdeep.InitAllreduce()
 	rank := gdeep.Comm_rank()
 	for i := 0; i < iterationNum; i++ {
-		readDataNum := iter * gdeep.Comm_size() + rank
+		readDataNum := iter*gdeep.Comm_size() + rank
 		if (readDataNum+1)*batchSize > trainDataSize {
 			iter = 0
-			readDataNum = iter * gdeep.Comm_size() + rank
+			readDataNum = iter*gdeep.Comm_size() + rank
 		}
 		imageBatch := train.ImagesFloatNorm[:][readDataNum*batchSize : (readDataNum+1)*batchSize]
 		lagelBatch := train.LabelsOneHot[:][readDataNum*batchSize : (readDataNum+1)*batchSize]

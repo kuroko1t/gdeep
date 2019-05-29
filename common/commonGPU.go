@@ -31,7 +31,7 @@ func DenseCheck(x gmat.Tensor, name string) {
 	ave := gmat.Sum(x) / float64(r*c)
 	max := gmat.Max(x)
 	gmat.Max(x)
-	log.Printf("##%s(%d,%d)## ave:%.4f max:%.4f", name, r, c, ave,max)
+	log.Printf("##%s(%d,%d)## ave:%.4f max:%.4f", name, r, c, ave, max)
 	//log.Printf("##%s(%d,%d)## ave:%.4f", name, r, c, ave)
 }
 
