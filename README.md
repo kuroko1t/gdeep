@@ -1,5 +1,5 @@
 # gdeep
-deep learning library. still in production..
+deep learning library written by golang. wellcom to contribution!! and still in production..
 
 # Install
 
