@@ -17,8 +17,8 @@
 package layer
 
 import (
-	"github.com/kuroko1t/gmat"
 	"github.com/kuroko1t/gdeep/common"
+	"github.com/kuroko1t/gmat"
 )
 
 func Softmax(a gmat.Tensor) gmat.Tensor {

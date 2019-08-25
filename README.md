@@ -9,6 +9,7 @@ go get github.com/kuroko1t/gmat
 go get github.com/kuroko1t/gdeep
 ```
 
+
 ## distributed
 
 * go get github.com/kuroko1t/gmpi
@@ -27,6 +28,9 @@ go run example/mlpMnist.go
 ```
 mpirun -np 2 -H host1:1,host2:1 go run example/mlpMnist_allreduce.go
 ```
+
+# Document
+https://godoc.org/github.com/kuroko1t/gdeep
 
 # implemented networks
 only support 2D input yet
