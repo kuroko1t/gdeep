@@ -1,15 +1,13 @@
 # gdeep
 deep learning library written by golang. wellcom to contribution!! and still in production..
 
-# Install
-
-```
-go get github.com/kuroko1t/gdeep
-```
-
 # Getting Started
 
+```
+git clone https://github.com/kuroko1t/gdeep
+cd gdeep
 go run example/mlpMnist.go
+```
 
 [sample](https://github.com/kuroko1t/gdeep/blob/master/example/mlpMnist.go)
 
